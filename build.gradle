@@ -19,6 +19,7 @@ plugins {
     id "com.diffplug.gradle.spotless" version "4.5.1"
 }
 
+version = gitVersion()
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.

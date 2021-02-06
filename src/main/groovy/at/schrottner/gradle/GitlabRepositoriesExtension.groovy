@@ -16,7 +16,7 @@ import org.gradle.authentication.http.HttpHeaderAuthentication
 @CompileStatic
 public class GitlabRepositoriesExtension {
 
-	public static final String STRING = "gitLabRepositories"
+	public static final String NAME = "gitLab"
 	public static final String REPOSITORY_PREFIX = "GITLAB-"
 	private final Project project
 	private final ExtensionContainer extensions
@@ -28,6 +28,8 @@ public class GitlabRepositoriesExtension {
 		this.project = project
 		this.extensions = project.extensions
 		this.repositories = project.repositories
+
+		project.logger.error("INITIALIZED")
 	}
 
 	ArtifactRepository maven(String id) {
@@ -38,6 +40,7 @@ public class GitlabRepositoriesExtension {
 			repositories.maven(artifactRepo)
 		} else {
 			project.logger.info("$repoName already exists")
+			repositories.getByName(repoName)
 		}
 	}
 

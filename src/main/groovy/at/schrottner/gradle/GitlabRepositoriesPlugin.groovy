@@ -5,6 +5,9 @@ import org.gradle.api.Plugin
 import org.gradle.api.plugins.ExtensionAware
 
 public class GitlabRepositoriesPlugin implements Plugin<Project> {
+    GitlabRepositoriesPlugin(def project) {
+    }
+
     public void apply(Project project) {
         ((ExtensionAware) project.repositories).extensions.create(
                 GitlabRepositoriesExtension.NAME,
