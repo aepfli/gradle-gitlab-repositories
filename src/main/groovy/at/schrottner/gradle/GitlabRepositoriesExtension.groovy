@@ -9,6 +9,7 @@ import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.artifacts.repositories.AuthenticationContainer
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.credentials.HttpHeaderCredentials
+import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.authentication.http.HttpHeaderAuthentication
 
@@ -24,6 +25,11 @@ public class GitlabRepositoriesExtension {
 
 	private static def ADDED_REPOSITORIES = [:]
 
+	GitlabRepositoriesExtension(Settings settings) {
+		settings
+
+	}
+
 	GitlabRepositoriesExtension(Project project) {
 		this.project = project
 		this.extensions = project.extensions
@@ -34,8 +40,8 @@ public class GitlabRepositoriesExtension {
 
 	ArtifactRepository maven(String id) {
 		def repoName = "$REPOSITORY_PREFIX-$id"
-		if (!repositories.getByName(repoName)) {
-			def artifactRepo = generateMavenArtifactRepository(repoName)
+		if (!repositories.findByName(repoName)) {
+			def artifactRepo = generateMavenArtifactRepository(repoName, id)
 			ADDED_REPOSITORIES[repoName] = artifactRepo
 			repositories.maven(artifactRepo)
 		} else {
@@ -44,11 +50,11 @@ public class GitlabRepositoriesExtension {
 		}
 	}
 
-	private Action<MavenArtifactRepository> generateMavenArtifactRepository(repoName) {
+	private Action<MavenArtifactRepository> generateMavenArtifactRepository(repoName, id) {
 		new Action<MavenArtifactRepository>() {
 			@Override
 			void execute(MavenArtifactRepository mvn) {
-				mvn.url = "url"
+				mvn.url = "https://gitlab.com/api/v4/groups/$id/-/packages/maven"
 				mvn.name = repoName
 				def credentialName
 				def credentialValue

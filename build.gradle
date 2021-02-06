@@ -35,8 +35,12 @@ gradlePlugin {
     // Define the plugin
     plugins {
         gitlabRepositories {
-            id = 'at.schrottner.gradle.gitlab-repositories'
+            id = 'at.schrottner.gitlab-repositories'
             implementationClass = 'at.schrottner.gradle.GitlabRepositoriesPlugin'
+        }
+        gitlabSettings {
+            id = 'at.schrottner.gitlab-settings-repositories'
+            implementationClass = 'at.schrottner.gradle.GitlabRepositoriesSettingsPlugin'
         }
     }
 }
