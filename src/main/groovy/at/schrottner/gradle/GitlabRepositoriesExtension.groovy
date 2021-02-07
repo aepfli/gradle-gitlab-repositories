@@ -80,7 +80,7 @@ public class GitlabRepositoriesExtension {
 		}
 	}
 
-	private Action<MavenArtifactRepository> generateMavenArtifactRepository(repoName, id, tokens) {
+	private Action<MavenArtifactRepository> generateMavenArtifactRepository(repoName, id, Map<String, Closure<String>> tokens) {
 		def token = tokens.find { key, value ->
 			value.call()
 		}
