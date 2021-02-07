@@ -14,6 +14,7 @@ plugins {
     id 'groovy'
 
     id 'maven-publish'
+    id 'com.gradle.plugin-publish' version '0.12.0'
 
     id 'com.palantir.git-version' version '0.12.3'
     id "com.diffplug.gradle.spotless" version "4.5.1"
@@ -37,14 +38,22 @@ gradlePlugin {
         gitlabRepositories {
             id = 'at.schrottner.gitlab-repositories'
             implementationClass = 'at.schrottner.gradle.GitlabRepositoriesPlugin'
+            displayName = 'GitLab-Repositories'
+            description = 'Handling GitLab repositories made easy. Easy setup for GitLab dependencies, for gradle plugins and others'
         }
         gitlabSettings {
             id = 'at.schrottner.gitlab-settings-repositories'
             implementationClass = 'at.schrottner.gradle.GitlabRepositoriesSettingsPlugin'
+            displayName = 'GitLab-Repositories for Settings.gradle'
+            description = 'Handling GitLab repositories made easy. Easy setup for GitLab dependencies, for gradle plugins and others'
         }
     }
 }
-
+pluginBundle {
+    website = 'https://github.com/aepfli/gradle-gitlab-repositories-plugin'
+    vcsUrl = 'https://github.com/aepfli/gradle-gitlab-repositories-plugin.git'
+    tags = ['GitLab', 'repositories']
+}
 // Add a source set for the functional test suite
 sourceSets {
     functionalTest {
