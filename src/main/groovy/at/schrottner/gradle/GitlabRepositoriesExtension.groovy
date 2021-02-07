@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory
 public class GitlabRepositoriesExtension {
 	public static final String NAME = "gitLab"
 	public static final String REPOSITORY_PREFIX = "GITLAB-"
-	public static final String PROPERTY_NAME = "GITLAB"
 	private final Logger logger
 	private final ExtensionContainer extensions
 	private final RepositoryHandler repositories
