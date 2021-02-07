@@ -70,7 +70,7 @@ gitLab.maven('1')
 ## in build.gradle
 
 ```groovy
-    plugins {
+plugins {
     id 'maven'
     id 'at.schrottner.gitlab-repositories' version '<version>'
 }
@@ -81,5 +81,42 @@ gitLab {
 repositories {
     // ...
     gitLab.maven('<id>')
+}
+```
+
+## USAGE without the plugin
+
+```groovy
+plugins {
+    id 'maven'
+}
+
+repositories {
+    maven {
+        url 'GitLab Url with ID'
+        name "GitLab"
+        if (System.getenv("CI_JOB_TOKEN")) {
+            credentials(HttpHeaderCredentials) {
+                name = 'Job-Token'
+                value = System.getenv("CI_JOB_TOKEN")
+            }
+        }
+        else if (System.getenv("GITLAB_DEPLOY_TOKEN")) {
+            credentials(HttpHeaderCredentials) {
+                name = 'Deploy-Token'
+                value = System.getenv("GITLAB_DEPLOY_TOKEN")
+            }
+        }
+        // local development
+        else {
+            credentials(HttpHeaderCredentials) {
+                name = 'Private-Token'
+                value = gitLabPrivateToken
+            }
+        }
+        authentication {
+            header(HttpHeaderAuthentication)
+        }
+    }
 }
 ```
