@@ -41,14 +41,9 @@ gradlePlugin {
             displayName = 'GitLab-Repositories'
             description = 'Handling GitLab repositories made easy. Easy setup for GitLab dependencies, for gradle plugins and others'
         }
-        gitlabSettings {
-            id = 'at.schrottner.gitlab-settings-repositories'
-            implementationClass = 'at.schrottner.gradle.GitlabRepositoriesSettingsPlugin'
-            displayName = 'GitLab-Repositories for Settings.gradle'
-            description = 'Handling GitLab repositories made easy. Easy setup for GitLab dependencies, for gradle plugins and others'
-        }
     }
 }
+
 pluginBundle {
     website = 'https://github.com/aepfli/gradle-gitlab-repositories-plugin'
     vcsUrl = 'https://github.com/aepfli/gradle-gitlab-repositories-plugin.git'

@@ -6,18 +6,28 @@ package at.schrottner.gradle
 import spock.lang.Specification
 import org.gradle.testkit.runner.GradleRunner
 
-/**
- * A simple functional test for the 'at.schrottner.gradle.greeting' plugin.
- */
 public class GitlabRepositoriesPluginFunctionalTest extends Specification {
     def "can run task"() {
         given:
         def projectDir = new File("build/functionalTest")
         projectDir.mkdirs()
-        new File(projectDir, "settings.gradle") << ""
+        new File(projectDir, "settings.gradle") << """
+
+        """
         new File(projectDir, "build.gradle") << """
+            import at.schrottner.gradle.auths.*
             plugins {
-                id('at.schrottner.gradle.greeting')
+                id('at.schrottner.gitlab-repositories')
+            }
+            gitLab {
+                token(PrivateToken) {
+                    it.key = 'privateToken'
+                    it.value = 'test'
+                }
+                token(DeployToken) {
+                    it.key = 'deployToken'
+                    it.value = 'test'
+                }
             }
         """
 
@@ -25,11 +35,14 @@ public class GitlabRepositoriesPluginFunctionalTest extends Specification {
         def runner = GradleRunner.create()
         runner.forwardOutput()
         runner.withPluginClasspath()
-        runner.withArguments("greeting")
+        runner.withArguments("gitLabTask", "-i")
         runner.withProjectDir(projectDir)
+        runner.withDebug(true)
         def result = runner.build()
 
         then:
-        result.output.contains("Hello from plugin 'at.schrottner.gradle.greeting'")
+        result.output.contains("GitLab-Repositories added Token: privateToken for Private-Token")
+        result.output.contains("GitLab-Repositories added Token: deployToken for Deploy-Token")
+
     }
 }

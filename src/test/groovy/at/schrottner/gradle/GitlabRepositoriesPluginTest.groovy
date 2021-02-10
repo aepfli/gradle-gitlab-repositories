@@ -16,9 +16,11 @@ public class GitlabRepositoriesPluginTest extends Specification {
         def project = ProjectBuilder.builder().build()
 
         when:
-        project.plugins.apply("at.schrottner.gradle.greeting")
+        project.plugins.apply("at.schrottner.gitlab-repositories")
 
         then:
-        project.tasks.findByName("greeting") != null
+        project.tasks.findByName("gitLabTask") != null
+        project.extensions.findByName(GitlabRepositoriesExtension.NAME) != null
+        project.extensions.findByName(GitlabRepositoriesExtension.NAME).tokens.size() > 0
     }
 }

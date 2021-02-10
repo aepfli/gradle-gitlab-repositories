@@ -1,5 +1,9 @@
 package at.schrottner.gradle
 
+import at.schrottner.gradle.auths.DeployToken
+import at.schrottner.gradle.auths.JobToken
+import at.schrottner.gradle.auths.PrivateToken
+import at.schrottner.gradle.auths.Token
 import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.Project
@@ -7,6 +11,7 @@ import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.artifacts.repositories.AuthenticationContainer
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.credentials.Credentials
 import org.gradle.api.credentials.HttpHeaderCredentials
 import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.ExtensionContainer
@@ -24,9 +29,8 @@ public class GitlabRepositoriesExtension {
 	private int afterPosition
 
 	String afterRepository = 'MavenLocal'
-	String privateToken
 	boolean applyToProject = true
-	Map<String, Closure<String>> tokens = [:]
+	Map<String, Token> tokens = [:]
 
 	public static final def artifacts = [:]
 
@@ -45,12 +49,20 @@ public class GitlabRepositoriesExtension {
 	}
 
 	void setup() {
-		tokens = [
-				'Job-Token'    : { System.getenv("CI_JOB_TOKEN") },
-				'Deploy-Token' : { System.getenv("GITLAB_DEPLOY_TOKEN") },
-				'Private-Token': { privateToken }
-		]
+		tokens = [:]
+		token(JobToken, {
+			it.key = 'jobToken'
+			it.value = System.getenv("CI_JOB_TOKEN")
+		})
 		afterPosition = repositories.indexOf(repositories.findByName(afterRepository))
+	}
+
+	void token(Class<? extends Token> tokenClass, Action< Token> action) {
+
+		def token = tokenClass.newInstance();
+		action.execute(token)
+		tokens.put(token.key, token)
+		logger.info("GitLab-Repositories added Token: $token.key for $token.name")
 	}
 
 	void setAfterRepository(String afterRepository) {
@@ -79,9 +91,9 @@ public class GitlabRepositoriesExtension {
 		}
 	}
 
-	private Action<MavenArtifactRepository> generateMavenArtifactRepository(repoName, id, Map<String, Closure<String>> tokens) {
-		def token = tokens.find { key, value ->
-			value.call()
+	private Action<MavenArtifactRepository> generateMavenArtifactRepository(repoName, id, Map<String, Token> tokens) {
+		Token token = tokens.values().find { token ->
+			token.value
 		}
 		if (token) {
 			logger.info("GitLab-Repositories: $repoName is using ${token['name']}")
@@ -93,8 +105,8 @@ public class GitlabRepositoriesExtension {
 					// on GitLab CI
 
 					mvn.credentials(HttpHeaderCredentials) {
-						it.name = token.key
-						it.value = token.value.call()
+						it.name = token.name
+						it.value = token.value
 					}
 					mvn.authentication(new Action<AuthenticationContainer>() {
 						@Override
