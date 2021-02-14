@@ -70,21 +70,59 @@ public class GitlabRepositoriesExtension {
 		afterPosition = repositories.indexOf(repositories.findByName(afterRepository))
 	}
 
-	ArtifactRepository maven(String id, Set<String> tokenSelector = tokens.keySet()) {
+	ArtifactRepository maven(String id, String tokenSelectors, boolean addToRepositories = true) {
+		return maven(id, [tokenSelectors].toSet(), addToRepositories)
+	}
+
+	/**
+	 * Generates a MavenArtifactRepository and adds it to the maven repositories.
+	 *
+	 * Additionally the generated Repository will be stored in a static variable,
+	 * which can later be used to be applied to evaluated projects.
+	 *
+	 * @param id id of the GitLab Group or Project, where you want to fetch from
+	 * @param tokenSelectors an optional list to limit token usage to certain tokens
+	 * @param addToRepositories as this function can also be used to generate a repository
+	 * 			for publishing, we might do not want to add it to the download repositories
+	 * @return
+	 */
+	ArtifactRepository maven(String id, Set<String> tokenSelectors = tokens.keySet(), boolean addToRepositories = true) {
+		if( !id ) {
+			logger.info("GitLab-Repositories: No ID provided nothing will happen here :)")
+			return null
+		}
+
+		/*
+		TODO:
+			Make this name, or at least the prefix configurable
+		 */
 		def repoName = "$REPOSITORY_PREFIX-$id"
 		if (!repositories.findByName(repoName)) {
 
+			/*
+			TODO:
+				Improve this handling, we could even utilize some kind of ordering from the set, to order it in the same
+				way. This way we would gain a lot of flexibility
+			 */
 			def artifactRepo = generateMavenArtifactRepository(
 					repoName,
 					id,
 					tokens.findAll { key, value ->
-						tokenSelector.contains(key)
+						tokenSelectors.contains(key)
 					})
 			artifacts[repoName] = artifactRepo
+
 			def repo = repositories.maven(artifactRepo)
-			// TODO:  rethink this approach do we really need a action? is the removing and readding really a good idea?
 			repositories.remove(repo)
-			repositories.add(++afterPosition, repo)
+
+			/*
+			TODO:
+				revisit this approach. Maybe this whole approach with using the maven method of repositories can be
+				or should be reworked. It was a fasty working hacky solution
+			*/
+			if(addToRepositories) {
+				repositories.add(++afterPosition, repo)
+			}
 		} else {
 			logger.info("GitLab-Repositories: $repoName already exists, i will not reapply it!")
 			repositories.getByName(repoName)
@@ -100,9 +138,14 @@ public class GitlabRepositoriesExtension {
 			new Action<MavenArtifactRepository>() {
 				@Override
 				void execute(MavenArtifactRepository mvn) {
+					/*
+					TODO:
+						Make this url configurable, so it can be also used for self hosted gitLab instances.
+						Additionally it would be cool, if we could provide a parameter, to select form a range of templates.
+						But this is currently out of scope.
+					 */
 					mvn.url = "https://gitlab.com/api/v4/groups/$id/-/packages/maven"
 					mvn.name = repoName
-					// on GitLab CI
 
 					mvn.credentials(HttpHeaderCredentials) {
 						it.name = token.name
