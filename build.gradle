@@ -45,9 +45,9 @@ gradlePlugin {
 }
 
 pluginBundle {
-    website = 'https://github.com/aepfli/gradle-gitlab-repositories-plugin'
-    vcsUrl = 'https://github.com/aepfli/gradle-gitlab-repositories-plugin.git'
-    tags = ['GitLab', 'repositories']
+    website = 'http://schrottner.at/gradle-gitlab-repositories/'
+    vcsUrl = 'https://github.com/aepfli/gradle-gitlab-repositories.git'
+    tags = ['GitLab', 'repositories', 'maven']
 }
 // Add a source set for the functional test suite
 sourceSets {
