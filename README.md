@@ -1,4 +1,5 @@
-# gradle-gitlab-repositories-plugin
+# Gradle GitLab Repositories Plugin
+
 Handling Maven GitLab dependencies easy. Define multiple tokens and selectively apply them to repositories.
 
 Adding a GitLab repository to your project is tiresome, based on the documentation you need to have different Tokens in
@@ -7,6 +8,7 @@ The [GitLab Documentation](https://docs.gitlab.com/ee/user/packages/maven_reposi
 shows the different types of Tokens, which can be used.
 
 There are:
+
 - Job-Tokens for CI
 - Private-Tokens for Users
 - Deploy-Tokens for external systems
