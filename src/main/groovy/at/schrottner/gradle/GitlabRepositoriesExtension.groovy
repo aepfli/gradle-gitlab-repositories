@@ -70,8 +70,8 @@ public class GitlabRepositoriesExtension {
 		afterPosition = repositories.indexOf(repositories.findByName(afterRepository))
 	}
 
-	ArtifactRepository maven(String id, String tokenSelectors, boolean addToRepositories = true) {
-		return maven(id, [tokenSelectors].toSet(), addToRepositories)
+	ArtifactRepository maven(String id, String tokenSelector, boolean addToRepositories = true) {
+		return maven(id, [tokenSelector].toSet(), addToRepositories)
 	}
 
 	/**

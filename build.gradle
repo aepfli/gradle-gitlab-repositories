@@ -39,7 +39,7 @@ gradlePlugin {
             id = 'at.schrottner.gitlab-repositories'
             implementationClass = 'at.schrottner.gradle.GitlabRepositoriesPlugin'
             displayName = 'GitLab-Repositories'
-            description = 'Handling GitLab repositories made easy. Easy setup for GitLab dependencies, for gradle plugins and others'
+            description = 'Handling Maven GitLab dependencies easy. Define multiple tokens and selectively apply them to repositories.'
         }
     }
 }
