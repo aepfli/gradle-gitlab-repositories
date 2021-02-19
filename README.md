@@ -20,6 +20,22 @@ overlap.
 
 This plugin tries to cover this by allowing to reapply the same plugins, even to each project.
 
+## Background
+
+We were in the migration phase from self-hosted development infrastructure (SCM, Nexus, Jenkins, SonarQube) to GitLab
+and Sonarcloud.io. During the migration phase we needed to support all 3 types of Tokens:
+
+- Job Token for GitLab CI
+- Deploy Token for 3rd Party systems like Jenkins
+- Private Token for local development
+
+Configuring multiple repositories with repeated configuration was bloating our gradle files. Additionally, minor
+mistakes like forgetting some parts in the configuration, made it really hard to migrate and follow up.
+
+In the end we investigated and come up with this solution. It will for sure fit not all needs, but it is a starting
+point. It might help others to easily setup this configuration and if there is demand, there is also room for
+improvements.
+
 # Usage
 
 ## Configuration
