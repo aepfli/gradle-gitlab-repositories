@@ -24,25 +24,25 @@ This plugin tries to cover this by allowing to reapply the same plugins, even to
 
 ```groovy
 gitLab {
-	/*
-only relevant for the usage within settings.gradle
-if the gitLab repositories should be also automatically applied to the project
-*/
+	/**
+	 * only relevant for the usage within settings.gradle 
+	 * if the gitLab repositories should be also automatically applied to the project
+	 * */
 	applyToProject = true
 
-	/*
-    After the repository with this name, the repositories will be added
-     */
+	/**
+	 * After the repository with this name, the repositories will be added
+	 * */
 	afterRepository = 'MavenLocal'
 
-	/*
-    Token configuration also the order in which we try to apply them.
-    The key is the name of the token, and the value will be used for application.
-    Currently we do have 3 different token classes:
-        - PrivateToken
-        - DeployToken
-        - JobToken (will be always added by default, based on CI_JOB_TOKEN)
-    */
+	/**
+	 * Token configuration also the order in which we try to apply them. 
+	 * The key is the name of the token, and the value will be used for application. 
+	 * Currently we do have 3 different token classes: 
+	 * - PrivateToken 
+	 * - DeployToken 
+	 * - JobToken (will be always added by default, based on CI_JOB_TOKEN)
+	 * */
 	token(PrivateToken) {
 		it.key = 'private'
 		it.value = gitLabPrivateToken // assumed variable in gradle.properties
