@@ -6,31 +6,60 @@ import org.gradle.api.Plugin
 import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.ExtensionAware
 
-public class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
+class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 
-	public void apply(ExtensionAware extensionAware) {
-
+	void apply(ExtensionAware extensionAware) {
 		if (extensionAware instanceof Project) {
-			extensionAware.extensions.create(
-					GitlabRepositoriesExtension.NAME,
-					GitlabRepositoriesExtension,
-					(Project) extensionAware
-			)
-
-			def task = extensionAware.tasks.create('gitLabTask', DefaultTask)
-			task.doLast {
-				println 'Welcome to GitLab'
-			}
+			apply(extensionAware)
 		} else if (extensionAware instanceof Settings) {
-			GitlabRepositoriesExtension extension = extensionAware.extensions.create(GitlabRepositoriesExtension.NAME, GitlabRepositoriesExtension, (Settings) extensionAware)
+			apply(extensionAware)
+		}
+	}
 
-			if (extension.applyToProject) {
-				extensionAware.gradle.beforeProject { project ->
-					GitlabRepositoriesExtension.artifacts.each { key, value ->
-						project.repositories.maven value
-					}
-				}
+	void apply(Settings extensionAware) {
+		GitlabRepositoriesExtension extension = extensionAware.extensions.create(GitlabRepositoriesExtension.NAME, GitlabRepositoriesExtension, (Settings) extensionAware)
+
+		extensionAware.gradle.afterProject { project ->
+			def pExt = project.extensions.findByName(GitlabRepositoriesExtension.NAME) ?:
+					project.extensions.create(
+							GitlabRepositoriesExtension.NAME,
+							GitlabRepositoriesExtension,
+							project
+					)
+			if (pExt.applySettingTokens)
+				remapTokens(extension, pExt)
+			if (extension.applyToProject)
+				applyProjects(project)
+		}
+	}
+
+	void apply(Project extensionAware) {
+		def extension = extensionAware.extensions.findByName(GitlabRepositoriesExtension.NAME) ?:
+				extensionAware.extensions.create(
+						GitlabRepositoriesExtension.NAME,
+						GitlabRepositoriesExtension,
+						(Project) extensionAware
+				)
+
+		def task = extensionAware.tasks.maybeCreate('gitLabTask', DefaultTask)
+		task.doLast {
+			println "GitLab Repository tokens:"
+			extension.tokens.each { key, value ->
+				println "- $key: ${value.getClass().simpleName}"
 			}
 		}
 	}
+
+	private static void remapTokens(GitlabRepositoriesExtension extension, pExt) {
+		def baseTokens = extension.tokens.clone()
+		baseTokens.putAll(pExt.tokens.clone())
+		pExt.tokens = baseTokens
+	}
+
+	private void applyProjects(project) {
+		GitlabRepositoriesExtension.artifacts.each { key, value ->
+			project.repositories.maven value
+		}
+	}
+
 }

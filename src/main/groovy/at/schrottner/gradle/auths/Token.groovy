@@ -1,6 +1,6 @@
 package at.schrottner.gradle.auths
 
-abstract class Token {
+public abstract class Token {
 	String name
 	String value
 	String key

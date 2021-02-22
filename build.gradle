@@ -7,64 +7,96 @@
  */
 
 plugins {
-    // Apply the Java Gradle plugin development plugin to add support for developing Gradle plugins
-    id 'java-gradle-plugin'
+	// Apply the Java Gradle plugin development plugin to add support for developing Gradle plugins
+	id 'java-gradle-plugin'
 
-    // Apply the Groovy plugin to add support for Groovy
-    id 'groovy'
+	// Apply the Groovy plugin to add support for Groovy
+	id 'groovy'
 
-    id 'maven-publish'
-    id 'com.gradle.plugin-publish' version '0.12.0'
+	id 'maven-publish'
+	id 'com.gradle.plugin-publish' version '0.12.0'
 
-    id 'com.palantir.git-version' version '0.12.3'
-    id "com.diffplug.gradle.spotless" version "4.5.1"
+	id 'com.palantir.git-version' version '0.12.3'
+	id "com.diffplug.gradle.spotless" version "4.5.1"
 }
 
 version = gitVersion()
 repositories {
-    // Use jcenter for resolving dependencies.
-    // You can declare any Maven/Ivy/file repository here.
-    jcenter()
+	// Use jcenter for resolving dependencies.
+	// You can declare any Maven/Ivy/file repository here.
+	mavenCentral()
+}
+task createClasspathManifest {
+	def outputDir = file("${buildDir}/${name}")
+
+	inputs.files sourceSets.main.runtimeClasspath
+	outputs.dir outputDir
+
+	doLast {
+		outputDir.mkdirs()
+		file("${outputDir}/plugin-classpath.txt").text = sourceSets.main.runtimeClasspath.join("\n")
+	}
 }
 
 dependencies {
-    // Use the awesome Spock testing and specification framework
-    testImplementation 'org.spockframework:spock-core:1.3-groovy-2.5'
+	// Use the awesome Spock testing and specification framework
+	testImplementation 'org.spockframework:spock-core:2.0-M4-groovy-2.5'
+	testImplementation platform('org.junit:junit-bom:5.7.1')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testCompile "org.assertj:assertj-core:3.11.1"
+	testCompile files(createClasspathManifest)
 }
 
 gradlePlugin {
-    // Define the plugin
-    plugins {
-        gitlabRepositories {
-            id = 'at.schrottner.gitlab-repositories'
-            implementationClass = 'at.schrottner.gradle.GitlabRepositoriesPlugin'
-            displayName = 'GitLab-Repositories'
-            description = 'Handling Maven GitLab dependencies easy. Define multiple tokens and selectively apply them to repositories.'
-        }
-    }
+	// Define the plugin
+	plugins {
+		gitlabRepositories {
+			id = 'at.schrottner.gitlab-repositories'
+			implementationClass = 'at.schrottner.gradle.GitlabRepositoriesPlugin'
+			displayName = 'GitLab-Repositories'
+			description = 'Handling Maven GitLab dependencies easy. Define multiple tokens and selectively apply them to repositories.'
+		}
+	}
 }
 
 pluginBundle {
-    website = 'http://schrottner.at/gradle-gitlab-repositories/'
-    vcsUrl = 'https://github.com/aepfli/gradle-gitlab-repositories.git'
-    tags = ['GitLab', 'repositories', 'maven']
+	website = 'http://schrottner.at/gradle-gitlab-repositories/'
+	vcsUrl = 'https://github.com/aepfli/gradle-gitlab-repositories.git'
+	tags = ['GitLab', 'repositories', 'maven']
 }
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
+}
+
 // Add a source set for the functional test suite
 sourceSets {
-    functionalTest {
-    }
+	functionalTest {
+
+	}
 }
 
 gradlePlugin.testSourceSets(sourceSets.functionalTest)
 configurations.functionalTestImplementation.extendsFrom(configurations.testImplementation)
+configurations.functionalTestRuntimeOnly.extendsFrom(configurations.testRuntimeOnly)
 
 // Add a task to run the functional tests
 task functionalTest(type: Test) {
-    testClassesDirs = sourceSets.functionalTest.output.classesDirs
-    classpath = sourceSets.functionalTest.runtimeClasspath
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
+	description = 'Runs the functional tests.'
+	group = 'verification'
+	testClassesDirs = sourceSets.functionalTest.output.classesDirs
+	classpath = sourceSets.functionalTest.runtimeClasspath
 }
 
 check {
-    // Run the functional tests as part of `check`
-    dependsOn(tasks.functionalTest)
+	// Run the functional tests as part of `check`
+	dependsOn(tasks.functionalTest)
 }
+

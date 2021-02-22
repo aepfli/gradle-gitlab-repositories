@@ -23,18 +23,22 @@ import org.slf4j.LoggerFactory
 public class GitlabRepositoriesExtension {
 	public static final String NAME = "gitLab"
 	public static final String REPOSITORY_PREFIX = "GITLAB-"
+	public static final String LOG_PREFIX = "GitLab Repositories"
 	private final Logger logger
 	private final ExtensionContainer extensions
 	private final RepositoryHandler repositories
 	private int afterPosition
+	private String logPrefix
 
 	String afterRepository = 'MavenLocal'
 	boolean applyToProject = true
+	boolean applySettingTokens = true
 	Map<String, Token> tokens = [:]
 
 	public static final def artifacts = [:]
 
 	GitlabRepositoriesExtension(Settings settings) {
+		logPrefix = "$LOG_PREFIX :: Settings ::"
 		this.logger = LoggerFactory.getLogger(GitlabRepositoriesExtension.class)
 		this.extensions = settings.extensions
 		this.repositories = settings.pluginManagement.repositories
@@ -42,6 +46,7 @@ public class GitlabRepositoriesExtension {
 	}
 
 	GitlabRepositoriesExtension(Project project) {
+		logPrefix = "$LOG_PREFIX :: Project ($project.name) ::"
 		this.logger = project.logger
 		this.extensions = project.extensions
 		this.repositories = project.repositories
@@ -49,7 +54,7 @@ public class GitlabRepositoriesExtension {
 	}
 
 	void setup() {
-		tokens = [:]
+		logger.info("$logPrefix initializing")
 		token(JobToken, {
 			it.key = 'jobToken'
 			it.value = System.getenv("CI_JOB_TOKEN")
@@ -58,11 +63,11 @@ public class GitlabRepositoriesExtension {
 	}
 
 	void token(Class<? extends Token> tokenClass, Action< Token> action) {
-
 		def token = tokenClass.newInstance();
 		action.execute(token)
+
+		logger.info("$logPrefix added $token.name: $token.key")
 		tokens.put(token.key, token)
-		logger.info("GitLab-Repositories added Token: $token.key for $token.name")
 	}
 
 	void setAfterRepository(String afterRepository) {
@@ -88,7 +93,7 @@ public class GitlabRepositoriesExtension {
 	 */
 	ArtifactRepository maven(String id, Set<String> tokenSelectors = tokens.keySet(), boolean addToRepositories = true) {
 		if( !id ) {
-			logger.info("GitLab-Repositories: No ID provided nothing will happen here :)")
+			logger.info("$logPrefix: No ID provided nothing will happen here :)")
 			return null
 		}
 
@@ -124,7 +129,7 @@ public class GitlabRepositoriesExtension {
 				repositories.add(++afterPosition, repo)
 			}
 		} else {
-			logger.info("GitLab-Repositories: $repoName already exists, i will not reapply it!")
+			logger.info("$logPrefix: Maven Repository with $repoName already exists!")
 			repositories.getByName(repoName)
 		}
 	}
@@ -134,7 +139,7 @@ public class GitlabRepositoriesExtension {
 			token.value
 		}
 		if (token) {
-			logger.info("GitLab-Repositories: $repoName is using ${token['name']}")
+			logger.info("$logPrefix: Maven Repository $repoName is using ${token['name']}")
 			new Action<MavenArtifactRepository>() {
 				@Override
 				void execute(MavenArtifactRepository mvn) {
