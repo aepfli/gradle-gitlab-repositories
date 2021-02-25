@@ -18,7 +18,10 @@ class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 
 	void apply(Settings extensionAware) {
 		GitlabRepositoriesExtension extension = extensionAware.extensions.create(GitlabRepositoriesExtension.NAME, GitlabRepositoriesExtension, (Settings) extensionAware)
-
+		extensionAware.gradle.beforeProject { project ->
+			if (extension.applyToProject)
+				applyProjects(project)
+		}
 		extensionAware.gradle.afterProject { project ->
 			def pExt = project.extensions.findByName(GitlabRepositoriesExtension.NAME) ?:
 					project.extensions.create(
@@ -28,8 +31,6 @@ class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 					)
 			if (pExt.applySettingTokens)
 				remapTokens(extension, pExt)
-			if (extension.applyToProject)
-				applyProjects(project)
 		}
 	}
 
