@@ -4,23 +4,19 @@
 package at.schrottner.gradle
 
 import org.gradle.testfixtures.ProjectBuilder
-import org.gradle.api.Project
 import spock.lang.Specification
 
-/**
- * A simple unit test for the 'at.schrottner.gradle.greeting' plugin.
- */
 public class GitlabRepositoriesPluginTest extends Specification {
-    def "plugin registers task"() {
-        given:
-        def project = ProjectBuilder.builder().build()
+	def "apply to Project"() {
+		given:
+		def project = ProjectBuilder.builder().build()
 
-        when:
-        project.plugins.apply("at.schrottner.gitlab-repositories")
+		when:
+		project.plugins.apply("at.schrottner.gitlab-repositories")
 
-        then:
-        project.tasks.findByName("gitLabTask") != null
-        project.extensions.findByName(GitlabRepositoriesExtension.NAME) != null
-        project.extensions.findByName(GitlabRepositoriesExtension.NAME).tokens.size() > 0
-    }
+		then:
+		project.tasks.findByName("gitLabTask") != null
+		project.extensions.findByName(GitlabRepositoriesExtension.NAME) != null
+		project.extensions.findByName(GitlabRepositoriesExtension.NAME).tokens.size() > 0
+	}
 }

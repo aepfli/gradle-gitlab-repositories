@@ -1,8 +1,8 @@
 package at.schrottner.gradle
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.Project
 import org.gradle.api.Plugin
+import org.gradle.api.Project
 import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.ExtensionAware
 

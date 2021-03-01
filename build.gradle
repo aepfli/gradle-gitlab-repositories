@@ -13,6 +13,8 @@ plugins {
 	// Apply the Groovy plugin to add support for Groovy
 	id 'groovy'
 
+	id 'jacoco'
+	id "pl.droidsonroids.jacoco.testkit" version "1.0.7"
 	id 'maven-publish'
 	id 'com.gradle.plugin-publish' version '0.12.0'
 
@@ -46,7 +48,13 @@ dependencies {
 	testCompile "org.assertj:assertj-core:3.11.1"
 	testCompile files(createClasspathManifest)
 }
-
+jacoco {
+	toolVersion = "0.8.6"
+}
+jacocoTestReport {
+	reports.html.enabled = true
+	executionData.setFrom fileTree(buildDir).include("/jacoco/*.exec")
+}
 gradlePlugin {
 	// Define the plugin
 	plugins {
@@ -94,6 +102,9 @@ task functionalTest(type: Test) {
 	testClassesDirs = sourceSets.functionalTest.output.classesDirs
 	classpath = sourceSets.functionalTest.runtimeClasspath
 }
+
+functionalTest.dependsOn generateJacocoTestKitProperties
+generateJacocoTestKitProperties.destinationFile = "$buildDir.absolutePath/jacoco/functional.exec"
 
 check {
 	// Run the functional tests as part of `check`

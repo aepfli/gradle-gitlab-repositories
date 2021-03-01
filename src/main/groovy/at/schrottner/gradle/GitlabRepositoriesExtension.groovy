@@ -1,8 +1,7 @@
 package at.schrottner.gradle
 
-import at.schrottner.gradle.auths.DeployToken
+
 import at.schrottner.gradle.auths.JobToken
-import at.schrottner.gradle.auths.PrivateToken
 import at.schrottner.gradle.auths.Token
 import groovy.transform.CompileStatic
 import org.gradle.api.Action
@@ -11,7 +10,6 @@ import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.artifacts.repositories.AuthenticationContainer
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
-import org.gradle.api.credentials.Credentials
 import org.gradle.api.credentials.HttpHeaderCredentials
 import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.ExtensionContainer

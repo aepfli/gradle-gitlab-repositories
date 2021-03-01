@@ -132,6 +132,14 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 		runner.withPluginClasspath()
 		runner.withArguments("gitLabTask", "-i", "-s")
 		runner.withProjectDir(projectDir)
+		runner.apply {
+
+			// gradle testkit jacoco support
+
+			File("./build/testkit/testkit-gradle.properties")
+					.copyTo(File(projectDir, "gradle.properties"))
+
+		}
 		runner.build()
 	}
 
