@@ -104,16 +104,23 @@ apply plugin: 'at.schrottner.gitlab-repositories'
 
 The plugin offers you a nice helper method inspired by `gradle-jruby-plugin` to easily add repositories.
 
-```
-gitLab.maven(projectOrGroupId, tokenselector [, addToRepositories]) 
-gitLab.maven(projectOrGroupId, [tokenselectors, addToRepositories])
+```groovy
+gitLab.maven(projectOrGroupId)
+gitLab.maven(projectOrGroupId) {
+	name = "custom name"
+	tokenSelektor = "" // a name of a configured token
+	tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
+	addToReposiotories = true
+	// if the repository should be added to the overall repositories, might be false if used for publishing
+
+}
 ```
 
 ### Adding a repository
 
 This will add a repository and will apply conditions for the first token matching, and not being empty.
 
-```
+```groovy
 gitLab.maven(1)
 ```
 
@@ -121,14 +128,16 @@ gitLab.maven(1)
 
 We can define which tokens should be taken into account (currently order of parameter is ignored)
 
-```
-gitLab.maven(1, ['private', 'deploy'])
+```groovy
+gitLab.maven(1) {
+	tokenSelectors = ['private', 'deploy']
+}
 ```
 
 Additionally, we can provide one specific token to be used, if the token is not set, or empty, nothing will be done.
 
-```
-gitLab.maven(1, 'deploy')
+```groovy
+gitLab.maven(1) { tokenSelector = 'deploy' }
 ```
 
 ### Creating a repository without adding it to the defaults
@@ -138,10 +147,8 @@ MavenRepository. Sometimes we do not want the repository to be added to the gene
 for publishing artifacts. For this case we provide an additional optional parameter called `addToRepositories`  which
 defaults to `true`.
 
-```
-gitLab.maven(1, addToRepository: false)
-gitLab.maven(1, ['private', 'deploy'], false)
-gitLab.maven(1, 'private', false)
+```groovy
+gitLab.maven(1) { addToRepository = false }
 ```
 
 ## USAGE without the plugin

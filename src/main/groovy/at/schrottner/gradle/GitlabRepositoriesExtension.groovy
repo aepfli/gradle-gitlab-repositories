@@ -26,8 +26,9 @@ public class GitlabRepositoriesExtension {
 	private final ExtensionContainer extensions
 	private final RepositoryHandler repositories
 	private int afterPosition
-	private String logPrefix
+	protected String logPrefix
 
+	String baseUrl = "gitlab.com"
 	String afterRepository = 'MavenLocal'
 	boolean applyToProject = true
 	boolean applySettingTokens = true
@@ -73,10 +74,6 @@ public class GitlabRepositoriesExtension {
 		afterPosition = repositories.indexOf(repositories.findByName(afterRepository))
 	}
 
-	ArtifactRepository maven(String id, String tokenSelector, boolean addToRepositories = true) {
-		return maven(id, [tokenSelector].toSet(), addToRepositories)
-	}
-
 	/**
 	 * Generates a MavenArtifactRepository and adds it to the maven repositories.
 	 *
@@ -84,35 +81,28 @@ public class GitlabRepositoriesExtension {
 	 * which can later be used to be applied to evaluated projects.
 	 *
 	 * @param id id of the GitLab Group or Project, where you want to fetch from
-	 * @param tokenSelectors an optional list to limit token usage to certain tokens
-	 * @param addToRepositories as this function can also be used to generate a repository
-	 * 			for publishing, we might do not want to add it to the download repositories
+	 * @param configAction to configure the MavenConfiguration
 	 * @return
 	 */
-	ArtifactRepository maven(String id, Set<String> tokenSelectors = tokens.keySet(), boolean addToRepositories = true) {
+	//ArtifactRepository maven(String id, String tokenSelector = "", Set<String> tokenSelectors = tokens.keySet(), boolean addToRepositories = true, String name = "") {
+	ArtifactRepository maven(String id, Action<MavenConfig> configAction = null) {
 		if (!id) {
 			logger.info("$logPrefix: No ID provided nothing will happen here :)")
 			return null
 		}
+		def mavenConfig = new MavenConfig(id)
 
-		/*
-		TODO:
-			Make this name, or at least the prefix configurable
-		 */
-		def repoName = "$REPOSITORY_PREFIX-$id"
+		configAction?.execute(mavenConfig)
+
+		def repoName = mavenConfig.name
 		if (!repositories.findByName(repoName)) {
 
-			/*
-			TODO:
-				Improve this handling, we could even utilize some kind of ordering from the set, to order it in the same
-				way. This way we would gain a lot of flexibility
-			 */
+			Map<String, Token> applicableTokens = getApplicableTokens(mavenConfig)
+
 			def artifactRepo = generateMavenArtifactRepository(
 					repoName,
 					id,
-					tokens.findAll { key, value ->
-						tokenSelectors.contains(key)
-					})
+					applicableTokens)
 
 			if (!artifactRepo) {
 				logger.error(
@@ -143,7 +133,7 @@ Currently you have configured following tokens, but non seem to resolve to an va
 				revisit this approach. Maybe this whole approach with using the maven method of repositories can be
 				or should be reworked. It was a fasty working hacky solution
 			*/
-			if (addToRepositories) {
+			if (mavenConfig.addToRepositories) {
 				repositories.add(++afterPosition, repo)
 			}
 			return repo
@@ -153,12 +143,23 @@ Currently you have configured following tokens, but non seem to resolve to an va
 		}
 	}
 
+	private Map<String, Token> getApplicableTokens(MavenConfig mavenConfig) {
+		Map<String, Token> applicableTokens = mavenConfig.tokenSelectors.collectEntries {
+			def token = tokens.get(it)
+			if (token)
+				[{ it }: token]
+		}
+		logger.debug("$logPrefix: Maven Repository with $mavenConfig.name will try to use following tokens ${applicableTokens.keySet()}")
+
+		applicableTokens
+	}
+
 	private Action<MavenArtifactRepository> generateMavenArtifactRepository(repoName, id, Map<String, Token> tokens) {
 		Token token = tokens.values().find { token ->
 			token.value
 		}
 		if (token) {
-			logger.info("$logPrefix: Maven Repository $repoName is using ${token['name']}")
+			logger.info("$logPrefix: Maven Repository $repoName is using '${token.key}'")
 			new Action<MavenArtifactRepository>() {
 				@Override
 				void execute(MavenArtifactRepository mvn) {
@@ -168,7 +169,7 @@ Currently you have configured following tokens, but non seem to resolve to an va
 						Additionally it would be cool, if we could provide a parameter, to select form a range of templates.
 						But this is currently out of scope.
 					 */
-					mvn.url = "https://gitlab.com/api/v4/groups/$id/-/packages/maven"
+					mvn.url = "https://$baseUrl/api/v4/groups/$id/-/packages/maven"
 					mvn.name = repoName
 
 					mvn.credentials(HttpHeaderCredentials) {
@@ -182,6 +183,32 @@ Currently you have configured following tokens, but non seem to resolve to an va
 						}
 					})
 				}
+			}
+		}
+	}
+
+	private class MavenConfig {
+		String tokenSelector
+		Set<String> tokenSelectors = tokens.keySet()
+		boolean addToRepositories = true
+		String name
+		String id
+
+		MavenConfig(String id) {
+			this.id = id
+		}
+
+		String getName() {
+			name ? "$name" : "$REPOSITORY_PREFIX$id"
+		}
+
+		Set<String> getTokenSelectors() {
+			if (tokenSelector) {
+				logger.info("$logPrefix: Maven Repository $name is using Single Token Selector '$tokenSelector' - other tokens will be ignored")
+
+				[tokenSelector].toSet()
+			} else {
+				tokenSelectors
 			}
 		}
 	}

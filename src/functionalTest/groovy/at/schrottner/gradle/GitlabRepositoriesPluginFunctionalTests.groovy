@@ -33,11 +33,28 @@ class GitlabRepositoriesPluginFunctionalTests {
 	@Test
 	void "only used in settings"() {
 		//given:
+		def id = "1234"
+		def renamed = "123"
 		settingsGradle << """
             $apply    
 			gitLab {
 				${generateToken('DeployToken', 'DeployToken')}
             }
+
+			gitLab.maven("$id")
+			gitLab.maven("$renamed") { name = "renamed" }
+			gitLab.maven("specialToken") { 
+				name = "justToken0"
+				tokenSelector = "token0" 
+			}
+			gitLab.maven("specialToken1") {
+				name = "justToken1"
+				tokenSelector = "token1" 
+			}
+			gitLab.maven("specialTokenSelection") {
+				name = "specialTokenSelection"
+				tokenSelectors = ["jobToken", "token1"]
+			}
         """
 		buildGradle << """
 			task gitLabTask {}
@@ -54,6 +71,11 @@ class GitlabRepositoriesPluginFunctionalTests {
 						"added Deploy-Token: token0",
 						"added Deploy-Token: token1"
 				)
+				.contains("Maven Repository GITLAB-$id is using 'token0'")
+				.contains("Maven Repository renamed is using 'token0'")
+				.contains("Maven Repository justToken0 is using 'token0'")
+				.contains("Maven Repository justToken1 is using 'token1'")
+				.contains("Maven Repository specialTokenSelection is using 'token1'")
 	}
 
 	@Test
