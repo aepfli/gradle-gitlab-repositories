@@ -113,10 +113,8 @@ public class GitlabRepositoriesExtension {
 					tokens.findAll { key, value ->
 						tokenSelectors.contains(key)
 					})
-			artifacts[repoName] = artifactRepo
 
-			def repo = repositories.maven(artifactRepo)
-			if (!repo) {
+			if (!artifactRepo) {
 				logger.error(
 						"""$LOG_PREFIX: Maven Repository $repoName was not added, as no token could be applied!
 
@@ -125,6 +123,10 @@ ${tokens.keySet().join("\n")}
 				""")
 				return null
 			}
+			artifacts[repoName] = artifactRepo
+
+			def repo = repositories.maven(artifactRepo)
+
 			repositories.remove(repo)
 
 			/*
