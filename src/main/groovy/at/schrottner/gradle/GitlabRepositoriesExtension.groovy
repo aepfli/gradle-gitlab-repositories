@@ -49,6 +49,15 @@ public class GitlabRepositoriesExtension {
 		this.logger = project.logger
 		this.extensions = project.extensions
 		this.repositories = project.repositories
+		if (extensions.extraProperties.hasProperty('gitLabTokens')) {
+			def passedOnTokens = (project.extensions.extraProperties['gitLabTokens'] ?: [:]) as Map<String, Object>
+			passedOnTokens.each { key, value ->
+				token(Class.forName(value.getClass().name) as Class<? extends Token>) {
+					it.key = value['key']
+					it.value = value['value']
+				}
+			}
+		}
 		setup()
 	}
 
@@ -189,13 +198,14 @@ Currently you have configured following tokens, but non seem to resolve to an va
 
 	private class MavenConfig {
 		String tokenSelector
-		Set<String> tokenSelectors = tokens.keySet()
+		Set<String> tokenSelectors
 		boolean addToRepositories = true
 		String name
 		String id
 
 		MavenConfig(String id) {
 			this.id = id
+			tokenSelectors = tokens.keySet()
 		}
 
 		String getName() {

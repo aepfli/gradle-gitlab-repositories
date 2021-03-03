@@ -5,6 +5,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.plugins.ExtraPropertiesExtension
 
 class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 
@@ -22,15 +23,9 @@ class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 			if (extension.applyToProject)
 				applyProjects(project)
 		}
-		extensionAware.gradle.afterProject { project ->
-			def pExt = project.extensions.findByName(GitlabRepositoriesExtension.NAME) ?:
-					project.extensions.create(
-							GitlabRepositoriesExtension.NAME,
-							GitlabRepositoriesExtension,
-							project
-					)
-			if (pExt.applySettingTokens)
-				remapTokens(extension, pExt)
+		extensionAware.gradle.beforeProject { project ->
+			def ext = project.extensions.findByName(ExtraPropertiesExtension.EXTENSION_NAME)
+			ext.gitLabTokens = extension.tokens
 		}
 	}
 
@@ -52,9 +47,9 @@ class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 	}
 
 	private static void remapTokens(GitlabRepositoriesExtension extension, pExt) {
-		def baseTokens = extension.tokens.clone()
-		baseTokens.putAll(pExt.tokens.clone())
-		pExt.tokens = baseTokens
+		extension.tokens.each {
+			pExt.tokens.put it.key, it.value
+		}
 	}
 
 	private void applyProjects(project) {
