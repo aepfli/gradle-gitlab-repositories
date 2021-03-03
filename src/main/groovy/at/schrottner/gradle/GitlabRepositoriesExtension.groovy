@@ -60,7 +60,7 @@ public class GitlabRepositoriesExtension {
 		afterPosition = repositories.indexOf(repositories.findByName(afterRepository))
 	}
 
-	void token(Class<? extends Token> tokenClass, Action< Token> action) {
+	void token(Class<? extends Token> tokenClass, Action<Token> action) {
 		def token = tokenClass.newInstance();
 		action.execute(token)
 
@@ -90,7 +90,7 @@ public class GitlabRepositoriesExtension {
 	 * @return
 	 */
 	ArtifactRepository maven(String id, Set<String> tokenSelectors = tokens.keySet(), boolean addToRepositories = true) {
-		if( !id ) {
+		if (!id) {
 			logger.info("$logPrefix: No ID provided nothing will happen here :)")
 			return null
 		}
@@ -116,6 +116,15 @@ public class GitlabRepositoriesExtension {
 			artifacts[repoName] = artifactRepo
 
 			def repo = repositories.maven(artifactRepo)
+			if (!repo) {
+				logger.error(
+						"""$LOG_PREFIX: Maven Repository $repoName was not added, as no token could be applied!
+
+Currently you have configured following tokens, but non seem to resolve to an value:
+${tokens.keySet().join("\n")}
+				""")
+				return null
+			}
 			repositories.remove(repo)
 
 			/*
@@ -123,9 +132,10 @@ public class GitlabRepositoriesExtension {
 				revisit this approach. Maybe this whole approach with using the maven method of repositories can be
 				or should be reworked. It was a fasty working hacky solution
 			*/
-			if(addToRepositories) {
+			if (addToRepositories) {
 				repositories.add(++afterPosition, repo)
 			}
+			return repo
 		} else {
 			logger.info("$logPrefix: Maven Repository with $repoName already exists!")
 			repositories.getByName(repoName)
