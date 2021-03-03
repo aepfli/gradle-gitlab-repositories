@@ -118,9 +118,18 @@ public class GitlabRepositoriesExtension {
 				logger.error(
 						"""$LOG_PREFIX: Maven Repository $repoName was not added, as no token could be applied!
 
+####################################################################################
+####################################################################################
+####################################################################################
 Currently you have configured following tokens, but non seem to resolve to an value:
-${tokens.keySet().join("\n")}
-				""")
+\t- ${tokens.keySet().join("\n\t- ")}
+
+				Thank you!
+
+####################################################################################
+####################################################################################
+####################################################################################
+						""")
 				return null
 			}
 			artifacts[repoName] = artifactRepo
