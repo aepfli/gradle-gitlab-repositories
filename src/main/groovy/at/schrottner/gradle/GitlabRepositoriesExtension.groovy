@@ -49,7 +49,7 @@ public class GitlabRepositoriesExtension {
 		this.logger = project.logger
 		this.extensions = project.extensions
 		this.repositories = project.repositories
-		if (extensions.extraProperties.hasProperty('gitLabTokens')) {
+		if (project.extensions.extraProperties.hasProperty('gitLabTokens')) {
 			def passedOnTokens = (project.extensions.extraProperties['gitLabTokens'] ?: [:]) as Map<String, Object>
 			passedOnTokens.each { key, value ->
 				token(Class.forName(value.getClass().name) as Class<? extends Token>) {
