@@ -74,7 +74,7 @@ public class GitlabRepositoriesExtension {
 		def token = tokenClass.newInstance();
 		action.execute(token)
 
-		logger.info("$logPrefix added $token.name: $token.key")
+		logger.info("$logPrefix ${tokens.containsKey(token.key) ? "replaced" : "added"} $token.name: $token.key")
 		tokens.put(token.key, token)
 	}
 
@@ -98,8 +98,8 @@ public class GitlabRepositoriesExtension {
 				mavenConfig.name,
 				id,
 				applicableTokens)
-		def repo = (delegate as RepositoryHandler).maven(artifactRepo)
-		return repo
+		if (artifactRepo)
+			(delegate as RepositoryHandler).maven(artifactRepo)
 	}
 	/**
 	 * Generates a MavenArtifactRepository and adds it to the maven repositories.
@@ -199,7 +199,7 @@ public class GitlabRepositoriesExtension {
 					+ "#################################################################################### \n\t"
 					+ "#################################################################################### \n\t"
 					+ "Currently you have configured following tokens, but non seem to resolve to an value: \n\t"
-					+ "\t- ${tokens.keySet().join("\n\t- ")} \n\t"
+					+ "\t- ${tokens.keySet().join("\n\t\t- ")} \n\t"
 					+ "\n\t"
 					+ "				Please verify your configuration - Thank you! \n\t"
 					+ "\n\t"

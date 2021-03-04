@@ -110,9 +110,22 @@ gitLab.maven(projectOrGroupId) {
 	name = "custom name"
 	tokenSelektor = "" // a name of a configured token
 	tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
-	addToReposiotories = true
-	// if the repository should be added to the overall repositories, might be false if used for publishing
+}
+```
 
+For adding a repository to the maven-publish repositories please use following method. The `owner` needs to be provided
+and is a reference to the `repositories`.
+
+```groovy
+publishing {
+	repositories {
+		gitLab.upload(owner, projectOrGroupId)
+		gitLab.upload(owner, projectOrGroupId) {
+			name = "custom name"
+			tokenSelektor = "" // a name of a configured token
+			tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
+		}
+	}
 }
 ```
 
@@ -140,22 +153,48 @@ Additionally, we can provide one specific token to be used, if the token is not 
 gitLab.maven(1) { tokenSelector = 'deploy' }
 ```
 
-### Creating a repository without adding it to the defaults
+## Comparison
 
-`gitLab.maven` will always try to add it to the existing repository list, but will also return the generated
-MavenRepository. Sometimes we do not want the repository to be added to the general list of "download" repositories, eg
-for publishing artifacts. For this case we provide an additional optional parameter called `addToRepositories`  which
-defaults to `true`.
-
-```groovy
-gitLab.maven(1) { addToRepository = false }
-```
-
-## USAGE without the plugin
+with the plugin
 
 ```groovy
 plugins {
-    id 'maven'
+	id 'maven'
+	id 'maven-publish'
+	id 'at.schrotter.gitlab-repositories' version '<version>'
+}
+
+import at.schrottner.gradle.auths.*
+
+gitLab {
+	// jobToken will be applied automatically
+	token(DeployToken) {
+		name = "deployToken"
+		value = System.getenv("GITLAB_DEPLOY_TOKEN")
+	}
+	token(PrivateToken) {
+		name = "privateToken"
+		value = gitLabPrivateToken
+	}
+}
+
+repositories {
+	gitLab.maven("ID")
+}
+
+publishing {
+	repositories {
+		gitLab.upload(owner, "ID")
+	}
+}
+```
+
+without this plugin
+
+```groovy
+plugins {
+	id 'maven'
+	id 'maven-publish'
 }
 
 repositories {
@@ -176,14 +215,44 @@ repositories {
         }
         // local development
         else {
-            credentials(HttpHeaderCredentials) {
-                name = 'Private-Token'
-                value = gitLabPrivateToken
-            }
-        }
-        authentication {
-            header(HttpHeaderAuthentication)
-        }
-    }
+			credentials(HttpHeaderCredentials) {
+				name = 'Private-Token'
+				value = gitLabPrivateToken
+			}
+		}
+		authentication {
+			header(HttpHeaderAuthentication)
+		}
+	}
+}
+
+publishing {
+	repositories {
+		maven {
+			url 'GitLab Url with ID'
+			name "GitLab"
+			if (System.getenv("CI_JOB_TOKEN")) {
+				credentials(HttpHeaderCredentials) {
+					name = 'Job-Token'
+					value = System.getenv("CI_JOB_TOKEN")
+				}
+			} else if (System.getenv("GITLAB_DEPLOY_TOKEN")) {
+				credentials(HttpHeaderCredentials) {
+					name = 'Deploy-Token'
+					value = System.getenv("GITLAB_DEPLOY_TOKEN")
+				}
+			}
+			// local development
+			else {
+				credentials(HttpHeaderCredentials) {
+					name = 'Private-Token'
+					value = gitLabPrivateToken
+				}
+			}
+			authentication {
+				header(HttpHeaderAuthentication)
+			}
+		}
+	}
 }
 ```

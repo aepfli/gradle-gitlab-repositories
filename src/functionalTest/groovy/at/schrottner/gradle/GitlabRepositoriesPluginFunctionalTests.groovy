@@ -112,10 +112,39 @@ class GitlabRepositoriesPluginFunctionalTests {
         """
 
 		buildGradle << """
-            $apply
+ 			buildscript {
+				dependencies {
+					classpath files($pluginClasspath)
+				}
+			}
+			plugins {
+				id 'maven-publish'
+			}
+            import at.schrottner.gradle.auths.*  
+			apply plugin: at.schrottner.gradle.GitlabRepositoriesPlugin
             gitLab {
 				${generateToken('PrivateToken', 'PrivateToken')}
             }
+			publishing {
+				repositories {
+					gitLab.upload(owner, "")
+					gitLab.upload(owner, "testNotAdded") {
+						name = "NotAdded"
+						tokenSelector = "jobToken"
+					}
+					gitLab.upload(owner, "testAdded") {
+						name = "GitLab"
+						tokenSelector = "token1"
+					}
+					gitLab.upload(owner, "testAdded") {
+						name = "GitLabSettingsToken"
+						tokenSelector = "token2"
+					}
+					gitLab.upload(owner, "testAnyToken") {
+						name = "GitLabAnyToken"
+					}
+				}
+			}
         """
 		//when:
 		BuildResult result = runTest()
@@ -127,11 +156,16 @@ class GitlabRepositoriesPluginFunctionalTests {
 						"added Job-Token: jobToken",
 						"added Deploy-Token: token0",
 						"added Deploy-Token: token1",
+						"added Deploy-Token: token2",
 						"Settings evaluated",
-						"added Job-Token: jobToken",
-						"added Private-Token: token0",
-						"added Private-Token: token1"
+						"replaced Job-Token: jobToken",
+						"replaced Private-Token: token0",
+						"replaced Private-Token: token1"
 				)
+				.contains("publishAllPublicationsToGitLabSettingsTokenRepository")
+				.contains("publishAllPublicationsToGitLabAnyTokenRepository")
+				.contains("publishAllPublicationsToGitLabRepository")
+				.contains("Maven Repository NotAdded was not added, as no token could be applied!\n")
 	}
 
 	def getApply() {
@@ -142,7 +176,7 @@ class GitlabRepositoriesPluginFunctionalTests {
 					classpath files($pluginClasspath)
 				}
 			}
-			apply plugin: at.schrottner.gradle.GitlabRepositoriesPlugin    
+			apply plugin: at.schrottner.gradle.GitlabRepositoriesPlugin
 		"""
 	}
 
@@ -150,7 +184,7 @@ class GitlabRepositoriesPluginFunctionalTests {
 		def runner = GradleRunner.create()
 		runner.forwardOutput()
 		runner.withPluginClasspath()
-		runner.withArguments("gitLabTask", "-i", "-s")
+		runner.withArguments("tasks", "-i", "-s")
 		runner.withProjectDir(projectDir)
 		runner.build()
 	}
