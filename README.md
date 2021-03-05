@@ -79,7 +79,9 @@ The plugin can be used within `build.gradle` and within `settings.gradle`.
 If there is no need to apply special repositories to the `build.gradle` it might be enough, to just apply it to the
 settings.
 
-### build.gradle
+### Groovy DSL
+
+#### build.gradle
 
 ```groovy
 plugins {
@@ -87,7 +89,7 @@ plugins {
 }
 ```
 
-### settings.gradle
+#### settings.gradle
 
 ```groovy
 buildscript {
@@ -98,6 +100,29 @@ buildscript {
 }
 
 apply plugin: 'at.schrottner.gitlab-repositories'
+```
+
+### Kotlin DSL
+
+#### build.gradle.kts
+
+```kotlin
+plugins {
+    id("at.schrottner.gitlab-repositories") version "0.1.4"
+}
+```
+
+#### settings.gradle.kts
+
+```kotlin
+buildscript {
+    // ..
+    dependencies {
+        classpath("at.schrottner.gradle.gitlab-plugin:gitlab-repositories:0.1.4")
+    }
+}
+
+apply(plugin = "at.schrottner.gitlab-repositories")
 ```
 
 ## Adding repositories
@@ -164,8 +189,6 @@ plugins {
 	id 'at.schrotter.gitlab-repositories' version '<version>'
 }
 
-import at.schrottner.gradle.auths.*
-
 gitLab {
 	// jobToken will be applied automatically
 	token(DeployToken) {
@@ -198,23 +221,20 @@ plugins {
 }
 
 repositories {
-    maven {
-        url 'GitLab Url with ID'
-        name "GitLab"
-        if (System.getenv("CI_JOB_TOKEN")) {
-            credentials(HttpHeaderCredentials) {
-                name = 'Job-Token'
-                value = System.getenv("CI_JOB_TOKEN")
-            }
-        }
-        else if (System.getenv("GITLAB_DEPLOY_TOKEN")) {
-            credentials(HttpHeaderCredentials) {
-                name = 'Deploy-Token'
-                value = System.getenv("GITLAB_DEPLOY_TOKEN")
-            }
-        }
-        // local development
-        else {
+	maven {
+		url 'GitLab Url with ID'
+		name "GitLab"
+		if (System.getenv("CI_JOB_TOKEN")) {
+			credentials(HttpHeaderCredentials) {
+				name = 'Job-Token'
+				value = System.getenv("CI_JOB_TOKEN")
+			}
+		} else if (System.getenv("GITLAB_DEPLOY_TOKEN")) {
+			credentials(HttpHeaderCredentials) {
+				name = 'Deploy-Token'
+				value = System.getenv("GITLAB_DEPLOY_TOKEN")
+			}
+		} else {
 			credentials(HttpHeaderCredentials) {
 				name = 'Private-Token'
 				value = gitLabPrivateToken
@@ -241,9 +261,7 @@ publishing {
 					name = 'Deploy-Token'
 					value = System.getenv("GITLAB_DEPLOY_TOKEN")
 				}
-			}
-			// local development
-			else {
+			} else {
 				credentials(HttpHeaderCredentials) {
 					name = 'Private-Token'
 					value = gitLabPrivateToken

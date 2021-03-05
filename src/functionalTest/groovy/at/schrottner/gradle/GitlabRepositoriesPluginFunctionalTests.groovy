@@ -120,7 +120,7 @@ class GitlabRepositoriesPluginFunctionalTests {
 			plugins {
 				id 'maven-publish'
 			}
-            import at.schrottner.gradle.auths.*  
+			
 			apply plugin: at.schrottner.gradle.GitlabRepositoriesPlugin
             gitLab {
 				${generateToken('PrivateToken', 'PrivateToken')}
@@ -169,8 +169,7 @@ class GitlabRepositoriesPluginFunctionalTests {
 	}
 
 	def getApply() {
-		""" 
-            import at.schrottner.gradle.auths.*      
+		"""   
  			buildscript {
 				dependencies {
 					classpath files($pluginClasspath)
