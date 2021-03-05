@@ -22,7 +22,7 @@ plugins {
 	id "com.diffplug.gradle.spotless" version "4.5.1"
 }
 
-version = gitVersion()
+version = "${gitVersion()}".replaceFirst(~/^v/, '')
 repositories {
 	// Use jcenter for resolving dependencies.
 	// You can declare any Maven/Ivy/file repository here.
@@ -55,6 +55,12 @@ jacocoTestReport {
 	reports.html.enabled = true
 	executionData.setFrom fileTree(buildDir).include("/jacoco/*.exec")
 }
+
+compileJava {
+	sourceCompatibility = '1.8'
+	targetCompatibility = '1.8'
+}
+
 gradlePlugin {
 	// Define the plugin
 	plugins {
