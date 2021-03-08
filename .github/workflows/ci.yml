@@ -27,5 +27,7 @@ jobs:
       
       - name: Build
         uses: eskatos/gradle-command-action@v1.3.3
-        with: 
-          arguments: build
+        env:
+          TEST_UPLOAD_TOKEN: ${{secrets.TEST_UPLOAD_TOKEN}}
+        with:
+          arguments: build -i

@@ -8,10 +8,16 @@ import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+import java.nio.file.Files
 
 import static org.assertj.core.api.Assertions.assertThat
 
 class GitlabRepositoriesPluginFunctionalTests {
+
+	private static final Logger logger = LoggerFactory.getLogger(GitlabRepositoriesPluginFunctionalTests.class)
 	private pluginClasspath = getClass().classLoader.findResource("plugin-classpath.txt")
 			.readLines()
 			.collect { it.replace('\\\\', '\\\\\\\\') } // escape backslashes in Windows paths
@@ -103,7 +109,28 @@ class GitlabRepositoriesPluginFunctionalTests {
 
 	@Test
 	void "used in settings and project"() {
+
+		if (!System.getenv('TEST_UPLOAD_TOKEN')) {
+
+			logger.warn """
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+     This tests runs without an attempt of uploading
+     Please configure a TEST_UPLOAD_TOKEN which has
+     upload rights.
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+"""
+		}
 		//given:
+		def file = new File(getClass().getResource('/test.xml').toURI())
+
+		Files.copy(file.toPath(), projectDir.toPath().resolve(file.name))
+
 		settingsGradle << """ 
             $apply
 			gitLab {
@@ -124,6 +151,10 @@ class GitlabRepositoriesPluginFunctionalTests {
 			apply plugin: at.schrottner.gradle.GitlabRepositoriesPlugin
             gitLab {
 				${generateToken('PrivateToken', 'PrivateToken')}
+            	token(PrivateToken) {
+					it.key = 'testToken'
+					it.value = '${System.getenv('TEST_UPLOAD_TOKEN')}'
+            	}
             }
 			publishing {
 				repositories {
@@ -132,9 +163,9 @@ class GitlabRepositoriesPluginFunctionalTests {
 						name = "NotAdded"
 						tokenSelector = "jobToken"
 					}
-					gitLab.upload(owner, "testAdded") {
+					gitLab.upload(owner, "24974077") {
 						name = "GitLab"
-						tokenSelector = "token1"
+						tokenSelector = "testToken"
 					}
 					gitLab.upload(owner, "testAdded") {
 						name = "GitLabSettingsToken"
@@ -144,10 +175,24 @@ class GitlabRepositoriesPluginFunctionalTests {
 						name = "GitLabAnyToken"
 					}
 				}
+			
+				publications {
+					test(MavenPublication) {
+						artifactId 'test-file'
+						groupId 'at.schrottner.test.gitlab-repositories'
+						version 'test-SNAPSHOT'
+						artifact source: 'test.xml', classifier: 'features'
+					}
+				}
 			}
         """
 		//when:
-		BuildResult result = runTest()
+		def runner = GradleRunner.create()
+		runner.forwardOutput()
+		runner.withPluginClasspath()
+		runner.withArguments("tasks", "-i", "-s")
+		runner.withProjectDir(projectDir)
+		def result = runner.build()
 
 		//then:
 		assertThat(result.output)
@@ -160,12 +205,23 @@ class GitlabRepositoriesPluginFunctionalTests {
 						"Settings evaluated",
 						"replaced Job-Token: jobToken",
 						"replaced Private-Token: token0",
-						"replaced Private-Token: token1"
+						"replaced Private-Token: token1",
+						"added Private-Token: testToken"
 				)
 				.contains("publishAllPublicationsToGitLabSettingsTokenRepository")
 				.contains("publishAllPublicationsToGitLabAnyTokenRepository")
 				.contains("publishAllPublicationsToGitLabRepository")
 				.contains("Maven Repository NotAdded was not added, as no token could be applied!\n")
+
+		if (System.getenv('TEST_UPLOAD_TOKEN')) {
+			def uploadRunner = GradleRunner.create()
+			uploadRunner.forwardOutput()
+			uploadRunner.withPluginClasspath()
+			uploadRunner.withArguments("publishTestPublicationToGitLabRepository", "-i", "-s")
+			uploadRunner.withProjectDir(projectDir)
+			def uploadResult = uploadRunner.build()
+			assertThat(uploadResult.output).contains("Publishing to repository 'GitLab'")
+		}
 	}
 
 	def getApply() {

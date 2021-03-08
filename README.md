@@ -130,8 +130,14 @@ apply(plugin = "at.schrottner.gitlab-repositories")
 The plugin offers you a nice helper method inspired by `gradle-jruby-plugin` to easily add repositories.
 
 ```groovy
-gitLab.maven(projectOrGroupId)
-gitLab.maven(projectOrGroupId) {
+gitLab.project(projectId)
+gitLab.project(projectId) {
+	name = "custom name"
+	tokenSelektor = "" // a name of a configured token
+	tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
+}
+gitLab.group(groupId)
+gitLab.group(groupId) {
 	name = "custom name"
 	tokenSelektor = "" // a name of a configured token
 	tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
@@ -139,13 +145,13 @@ gitLab.maven(projectOrGroupId) {
 ```
 
 For adding a repository to the maven-publish repositories please use following method. The `owner` needs to be provided
-and is a reference to the `repositories`.
+and is a reference to the `repositories`. Be aware that this has to be a groupId
 
 ```groovy
 publishing {
 	repositories {
-		gitLab.upload(owner, projectOrGroupId)
-		gitLab.upload(owner, projectOrGroupId) {
+		gitLab.upload(owner, projectId)
+		gitLab.upload(owner, projectId) {
 			name = "custom name"
 			tokenSelektor = "" // a name of a configured token
 			tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
@@ -159,7 +165,8 @@ publishing {
 This will add a repository and will apply conditions for the first token matching, and not being empty.
 
 ```groovy
-gitLab.maven(1)
+gitLab.project(1)
+gitLab.group(1)
 ```
 
 ### Adding a repository with specific tokens
@@ -167,7 +174,10 @@ gitLab.maven(1)
 We can define which tokens should be taken into account (currently order of parameter is ignored)
 
 ```groovy
-gitLab.maven(1) {
+gitLab.project(1) {
+	tokenSelectors = ['private', 'deploy']
+}
+gitLab.group(1) {
 	tokenSelectors = ['private', 'deploy']
 }
 ```
@@ -175,7 +185,8 @@ gitLab.maven(1) {
 Additionally, we can provide one specific token to be used, if the token is not set, or empty, nothing will be done.
 
 ```groovy
-gitLab.maven(1) { tokenSelector = 'deploy' }
+gitLab.project(1) { tokenSelector = 'deploy' }
+gitLab.group(1) { tokenSelector = 'deploy' }
 ```
 
 ## Comparison
@@ -202,7 +213,7 @@ gitLab {
 }
 
 repositories {
-	gitLab.maven("ID")
+	gitLab.group("ID")
 }
 
 publishing {
