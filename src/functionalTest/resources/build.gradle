@@ -1,0 +1,42 @@
+buildscript {
+	dependencies {
+		classpath files(pluginClasspath.split(','))
+	}
+}
+apply plugin: at.schrottner.gradle.GitlabRepositoriesPlugin
+
+gitLab {
+	token(PrivateToken) {
+		it.key = 'tokenIgnoredNoValue'
+		it.value = ''
+	}
+	token(PrivateToken) {
+		it.key = 'token0'
+		it.value = 'test'
+	}
+	token(PrivateToken) {
+		it.key = 'token1'
+		it.value = 'test'
+	}
+	token(DeployToken) {
+		it.key = 'tokenAdded'
+		it.value = 'test'
+	}
+}
+realms.split(',').each { realm ->
+
+	gitLab."$realm"("$existingId")
+	gitLab."$realm"("$renamedId") { name = "$realm-renamed" }
+	gitLab."$realm"("specialToken") {
+		tokenSelector = "token0"
+	}
+	gitLab."$realm"("specialToken1") {
+		tokenSelector = "token1"
+	}
+	gitLab."$realm"("specialTokenSelection") {
+		tokenSelectors = ["jobToken", "token1"]
+	}
+	gitLab."$realm"("ignoredNoValue") {
+		tokenSelector = "tokenIgnoredNoValue"
+	}
+}

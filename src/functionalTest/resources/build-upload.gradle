@@ -1,0 +1,47 @@
+buildscript {
+	dependencies {
+		classpath files(pluginClasspath.split(','))
+	}
+}
+plugins {
+	id 'maven-publish'
+}
+apply plugin: at.schrottner.gradle.GitlabRepositoriesPlugin
+
+gitLab {
+	token(PrivateToken) {
+		it.key = 'testToken'
+		it.value = System.getenv('TEST_UPLOAD_TOKEN')
+	}
+}
+publishing {
+	repositories {
+		gitLab.upload(owner, "")
+		gitLab.upload(owner, "$existingId")
+		gitLab.upload(owner, "specialToken") {
+			tokenSelector = "token0"
+		}
+		gitLab.upload(owner, "specialToken1") {
+			tokenSelector = "token1"
+		}
+		gitLab.upload(owner, "specialTokenSelection") {
+			tokenSelectors = ["jobToken", "token1"]
+		}
+		gitLab.upload(owner, "ignoredNoValue") {
+			tokenSelector = "tokenIgnoredNoValue"
+		}
+		gitLab.upload(owner, "24974077") {
+			name = "GitLab"
+			tokenSelector = "testToken"
+		}
+	}
+
+	publications {
+		test(MavenPublication) {
+			artifactId 'test-file'
+			groupId 'at.schrottner.test.gitlab-repositories'
+			version 'test-SNAPSHOT'
+			artifact source: 'test.xml', classifier: 'features'
+		}
+	}
+}

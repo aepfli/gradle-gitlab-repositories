@@ -3,6 +3,7 @@ package at.schrottner.gradle;
 import java.util.Set;
 
 trait MavenConfig implements LogHandler {
+	public static final String REPOSITORY_PREFIX = "GitLab"
 	String tokenSelector
 	Set<String> tokenSelectors
 	String name
@@ -10,7 +11,7 @@ trait MavenConfig implements LogHandler {
 	String endpoint
 
 	String getName() {
-		name ? "$name" : "$GitlabRepositoriesExtension.REPOSITORY_PREFIX$id"
+		name ? "$name" : "$REPOSITORY_PREFIX-${(endpoint - 's').capitalize()}-$id"
 	}
 
 	Set<String> getTokenSelectors() {
