@@ -1,3 +1,5 @@
 theme: jekyll-theme-minimal
 title: Gradle GitLab Repositories Plugin
 description: Handling Maven GitLab dependencies easy. Define multiple tokens and selectively apply them to repositories.
+
+google_analytics: G-WS2G3Q099Y
