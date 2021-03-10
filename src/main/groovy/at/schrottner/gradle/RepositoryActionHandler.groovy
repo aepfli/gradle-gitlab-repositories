@@ -89,12 +89,18 @@ class RepositoryActionHandler {
 		if (repositoryConfiguration.name) {
 			return repositoryConfiguration.name
 		}
-		return "$REPOSITORY_PREFIX-${(repositoryConfiguration.endpoint - 's').capitalize()}-$repositoryConfiguration.id"
+		return "$REPOSITORY_PREFIX-$repositoryConfiguration.type-$repositoryConfiguration.id"
 	}
 
 	private String buildUrl(RepositoryConfiguration repositoryConfiguration) {
-
-		"https://$baseUrl/api/v4/$repositoryConfiguration.endpoint/$repositoryConfiguration.id/-/packages/maven"
+		switch (repositoryConfiguration.type) {
+			case GitLabEntityType.PROJECT:
+				"https://$baseUrl/api/v4/${GitLabEntityType.PROJECT.endpoint}/$repositoryConfiguration.id/packages/maven"
+				break
+			case Config.GROUP:
+				"https://$baseUrl/api/v4/${GitLabEntityType.GROUP.endpoint}/$repositoryConfiguration.id/-/packages/maven"
+				break
+		}
 	}
 
 	private handleInapplicableTokenCase(RepositoryConfiguration repositoryConfiguration, Set<String> applicableTokens) {

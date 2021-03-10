@@ -12,6 +12,6 @@ abstract class RepositoryConfiguration {
 	Set<String> tokenSelectors
 	String name
 	String id
-	String endpoint
+	GitLabEntityType type
 
 }
