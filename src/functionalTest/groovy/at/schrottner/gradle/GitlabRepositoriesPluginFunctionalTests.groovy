@@ -79,7 +79,7 @@ class GitlabRepositoriesPluginFunctionalTests {
 							"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
 							"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!"
 					)
-					.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using")
+					.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using '")
 		}
 	}
 
@@ -110,7 +110,7 @@ class GitlabRepositoriesPluginFunctionalTests {
 							"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
 							"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!"
 					)
-					.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using")
+					.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using '")
 		}
 	}
 
@@ -152,7 +152,7 @@ class GitlabRepositoriesPluginFunctionalTests {
 							"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
 							"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!"
 					)
-					.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using")
+					.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using '")
 		}
 	}
 
@@ -195,7 +195,7 @@ class GitlabRepositoriesPluginFunctionalTests {
 						"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!",
 						"Maven Repository GitLab is using 'testToken'",
 				)
-				.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using")
+				.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using '")
 				.contains("Publishing to repository 'GitLab'")
 
 	}

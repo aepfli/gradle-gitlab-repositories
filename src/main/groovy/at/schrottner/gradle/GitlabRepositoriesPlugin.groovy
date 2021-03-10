@@ -10,6 +10,10 @@ import org.gradle.api.initialization.Settings
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.ExtraPropertiesExtension
 
+/**
+ * TODO:
+ * 	- implement passing on configuration from Settings to Plugin, in a way that it can not be overwritten
+ */
 class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 
 	void apply(ExtensionAware extensionAware) {
@@ -29,7 +33,7 @@ class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 		GitlabRepositoriesExtension extension = extensionAware.extensions.create(GitlabRepositoriesExtension.NAME, GitlabRepositoriesExtension, (Settings) extensionAware)
 		extensionAware.gradle.beforeProject { project ->
 			if (extension.applyToProject)
-				applyProjects(project)
+				applyProjects(extension, project)
 		}
 		extensionAware.gradle.beforeProject { project ->
 			def ext = project.extensions.findByName(ExtraPropertiesExtension.EXTENSION_NAME)
@@ -54,14 +58,8 @@ class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 		}
 	}
 
-	private static void remapTokens(GitlabRepositoriesExtension extension, pExt) {
-		extension.tokens.each {
-			pExt.tokens.put it.key, it.value
-		}
-	}
-
-	private void applyProjects(project) {
-		GitlabRepositoriesExtension.artifacts.each { key, value ->
+	private void applyProjects(extension, project) {
+		extension.artifactActionStorage.each { value ->
 			project.repositories.maven value
 		}
 	}
