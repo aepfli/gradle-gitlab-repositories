@@ -2,8 +2,8 @@ package at.schrottner.gradle
 
 import at.schrottner.gradle.auths.JobToken
 import at.schrottner.gradle.auths.Token
-import at.schrottner.gradle.mavenConfigs.GroupConfiguration
-import at.schrottner.gradle.mavenConfigs.ProjectConfiguration
+import at.schrottner.gradle.configurations.GroupConfiguration
+import at.schrottner.gradle.configurations.ProjectConfiguration
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.RepositoryHandler
