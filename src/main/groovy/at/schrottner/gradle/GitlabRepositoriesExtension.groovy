@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory
 
 public class GitlabRepositoriesExtension implements LogHandler {
 	public static final String NAME = "gitLab"
-	public static final String REPOSITORY_PREFIX = "GITLAB-"
 	private final RepositoryHandler repositories
 	private int afterPosition
 
@@ -82,6 +81,14 @@ public class GitlabRepositoriesExtension implements LogHandler {
 		}
 	}
 
+	/**
+	 * @deprecated use{@link #group(java.lang.String, org.gradle.api.Action)} or {@link #project(java.lang.String, org.gradle.api.Action)}
+	 */
+	@Deprecated
+	MavenArtifactRepository maven(String id, Action<MavenConfig> configAction = null) {
+		group(id, configAction)
+	}
+
 	MavenArtifactRepository group(String id, Action<MavenConfig> configAction = null) {
 		mavenInternal(new GroupMavenConfig(id), configAction)
 	}
@@ -91,13 +98,6 @@ public class GitlabRepositoriesExtension implements LogHandler {
 		mavenInternal(new ProjectMavenConfig(id), configAction)
 	}
 
-	/**
-	 * @deprecated use{@link #group(id, configAction)} or {@link #project(id, configAction)}
-	 */
-	@Deprecated
-	MavenArtifactRepository maven(String id, Action<MavenConfig> configAction = null) {
-		group(id, configAction)
-	}
 
 	MavenArtifactRepository mavenInternal(MavenConfig mavenConfig,
 										  Action<MavenConfig> configAction = null,
@@ -178,7 +178,7 @@ public class GitlabRepositoriesExtension implements LogHandler {
 					"#################################################################################### \n\t" +
 					"#################################################################################### \n\t" +
 					"Currently you have configured following tokens, but non seem to resolve to an value: \n\t" +
-					"\t- ${tokens.keySet().join("\n\t\t- ")} \n\t" +
+					"\t- ${mavenConfig.tokenSelectors.join("\n\t\t- ")} \n\t" +
 					"\n\t" +
 					"				Please verify your configuration - Thank you! \n\t" +
 					"\n\t" +

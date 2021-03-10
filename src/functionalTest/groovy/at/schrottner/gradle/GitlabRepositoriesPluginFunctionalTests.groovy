@@ -7,6 +7,8 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 import org.junit.jupiter.api.io.TempDir
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -18,50 +20,39 @@ import static org.assertj.core.api.Assertions.assertThat
 class GitlabRepositoriesPluginFunctionalTests {
 
 	private static final Logger logger = LoggerFactory.getLogger(GitlabRepositoriesPluginFunctionalTests.class)
+	public static final String SETTINGS_GRADLE = 'settings.gradle'
+	public static final String BUILD_GRADLE = "build.gradle"
+	private static def existingId = "1234"
+	private static def renamedId = "123"
+	private static def realms = ["group", "project"]
 	private pluginClasspath = getClass().classLoader.findResource("plugin-classpath.txt")
 			.readLines()
 			.collect { it.replace('\\\\', '\\\\\\\\') } // escape backslashes in Windows paths
-			.collect { "'$it'" }
-			.join(", ")
+			.collect { "$it" }
+			.join(",")
 
 	File projectDir
 	File settingsGradle
 	File buildGradle
+	File gradleProperties
 
 	@BeforeEach
 	void setup(@TempDir File projectDir) {
 		this.projectDir = projectDir
-
-		settingsGradle = new File(projectDir, "settings.gradle")
-		buildGradle = new File(projectDir, "build.gradle")
+		gradleProperties = new File(projectDir, "gradle.properties")
+		gradleProperties << """
+			existingId=$existingId
+			renamedId=$renamedId
+			pluginClasspath=$pluginClasspath
+			realms=${realms.join(',')}
+		"""
 	}
 
 	@Test
 	void "only used in settings"() {
 		//given:
-		def id = "1234"
-		def renamed = "123"
-		settingsGradle << """
-            $apply    
-			gitLab {
-				${generateToken('DeployToken', 'DeployToken')}
-            }
-
-			gitLab.maven("$id")
-			gitLab.maven("$renamed") { name = "renamed" }
-			gitLab.maven("specialToken") { 
-				name = "justToken0"
-				tokenSelector = "token0" 
-			}
-			gitLab.maven("specialToken1") {
-				name = "justToken1"
-				tokenSelector = "token1" 
-			}
-			gitLab.maven("specialTokenSelection") {
-				name = "specialTokenSelection"
-				tokenSelectors = ["jobToken", "token1"]
-			}
-        """
+		settingsGradle = TestFileUtils.getTestResource(new File(projectDir, SETTINGS_GRADLE), SETTINGS_GRADLE)
+		buildGradle = new File(projectDir, BUILD_GRADLE)
 		buildGradle << """
 			task gitLabTask {}
 		"""
@@ -70,170 +61,145 @@ class GitlabRepositoriesPluginFunctionalTests {
 		BuildResult result = runTest()
 
 		//then:
-		assertThat(result.output)
-				.contains("BUILD SUCCESSFUL")
-				.containsSubsequence(
-						"added Job-Token: jobToken",
-						"added Deploy-Token: token0",
-						"added Deploy-Token: token1"
-				)
-				.contains("Maven Repository GITLAB-$id is using 'token0'")
-				.contains("Maven Repository renamed is using 'token0'")
-				.contains("Maven Repository justToken0 is using 'token0'")
-				.contains("Maven Repository justToken1 is using 'token1'")
-				.contains("Maven Repository specialTokenSelection is using 'token1'")
+		realms.each {
+			def capitalized = it.capitalize()
+			def repoPrefix = "GitLab-${capitalized}"
+			assertThat(result.output)
+					.contains("BUILD SUCCESSFUL")
+					.containsSubsequence(
+							"added Job-Token: jobToken",
+							"added Private-Token: tokenIgnoredNoValue",
+							"added Deploy-Token: token0",
+							"added Deploy-Token: token1"
+					)
+					.containsSubsequence("Maven Repository $repoPrefix-$existingId is using 'token0'",
+							"Maven Repository $it-renamed is using 'token0'",
+							"Maven Repository $repoPrefix-specialToken is using 'token0'",
+							"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
+							"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
+							"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!"
+					)
+					.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using")
+		}
 	}
 
 	@Test
 	void "only used in project"() {
 		//given:
-		buildGradle << """
-            $apply    
-			gitLab {
-				${generateToken('DeployToken', 'DeployToken')}
-            }
-        """
+		buildGradle = TestFileUtils.getTestResource(new File(projectDir, BUILD_GRADLE), BUILD_GRADLE)
 
 		//when:
 		BuildResult result = runTest()
 
 		//then:
-		assertThat(result.output)
-				.contains("BUILD SUCCESSFUL")
-				.containsSubsequence(
-						"added Job-Token: jobToken",
-						"added Deploy-Token: token0",
-						"added Deploy-Token: token1"
-				)
+		realms.each {
+			def capitalized = it.capitalize()
+			def repoPrefix = "GitLab-${capitalized}"
+			assertThat(result.output)
+					.contains("BUILD SUCCESSFUL")
+					.containsSubsequence(
+							"added Job-Token: jobToken",
+							"added Private-Token: tokenIgnoredNoValue",
+							"added Private-Token: token0",
+							"added Private-Token: token1"
+					)
+					.containsSubsequence("Maven Repository $repoPrefix-$existingId is using 'token0'",
+							"Maven Repository $it-renamed is using 'token0'",
+							"Maven Repository $repoPrefix-specialToken is using 'token0'",
+							"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
+							"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
+							"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!"
+					)
+					.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using")
+		}
 	}
 
 	@Test
 	void "used in settings and project"() {
-
-		if (!System.getenv('TEST_UPLOAD_TOKEN')) {
-
-			logger.warn """
-##########################################################
-##########################################################
-##########################################################
-##########################################################
-     This tests runs without an attempt of uploading
-     Please configure a TEST_UPLOAD_TOKEN which has
-     upload rights.
-##########################################################
-##########################################################
-##########################################################
-##########################################################
-"""
-		}
 		//given:
-		def file = new File(getClass().getResource('/test.xml').toURI())
+		settingsGradle = TestFileUtils.getTestResource(new File(projectDir, SETTINGS_GRADLE), SETTINGS_GRADLE)
+		buildGradle = TestFileUtils.getTestResource(new File(projectDir, BUILD_GRADLE), BUILD_GRADLE)
 
-		Files.copy(file.toPath(), projectDir.toPath().resolve(file.name))
-
-		settingsGradle << """ 
-            $apply
-			gitLab {
-				${generateToken('DeployToken', 'DeployToken', 'DeployToken')}
-            }
-        """
-
-		buildGradle << """
- 			buildscript {
-				dependencies {
-					classpath files($pluginClasspath)
-				}
-			}
-			plugins {
-				id 'maven-publish'
-			}
-			
-			apply plugin: at.schrottner.gradle.GitlabRepositoriesPlugin
-            gitLab {
-				${generateToken('PrivateToken', 'PrivateToken')}
-            	token(PrivateToken) {
-					it.key = 'testToken'
-					it.value = '${System.getenv('TEST_UPLOAD_TOKEN')}'
-            	}
-            }
-			publishing {
-				repositories {
-					gitLab.upload(owner, "")
-					gitLab.upload(owner, "testNotAdded") {
-						name = "NotAdded"
-						tokenSelector = "jobToken"
-					}
-					gitLab.upload(owner, "24974077") {
-						name = "GitLab"
-						tokenSelector = "testToken"
-					}
-					gitLab.upload(owner, "testAdded") {
-						name = "GitLabSettingsToken"
-						tokenSelector = "token2"
-					}
-					gitLab.upload(owner, "testAnyToken") {
-						name = "GitLabAnyToken"
-					}
-				}
-			
-				publications {
-					test(MavenPublication) {
-						artifactId 'test-file'
-						groupId 'at.schrottner.test.gitlab-repositories'
-						version 'test-SNAPSHOT'
-						artifact source: 'test.xml', classifier: 'features'
-					}
-				}
-			}
-        """
 		//when:
-		def runner = GradleRunner.create()
-		runner.forwardOutput()
-		runner.withPluginClasspath()
-		runner.withArguments("tasks", "-i", "-s")
-		runner.withProjectDir(projectDir)
-		def result = runner.build()
+		BuildResult result = runTest()
 
 		//then:
-		assertThat(result.output)
+		realms.each {
+			def capitalized = it.capitalize()
+			def repoPrefix = "GitLab-${capitalized}"
+			assertThat(result.output)
+					.contains("BUILD SUCCESSFUL")
+					.containsSubsequence(
+							"added Job-Token: jobToken",
+							"added Private-Token: tokenIgnoredNoValue",
+							"added Deploy-Token: token0",
+							"added Deploy-Token: token1",
+							"Settings evaluated",
+							"added Job-Token: jobToken",
+							"added Private-Token: tokenIgnoredNoValue",
+							"added Deploy-Token: token0",
+							"added Deploy-Token: token1",
+							"replaced Job-Token: jobToken",
+							"replaced Private-Token: tokenIgnoredNoValue",
+							"replaced Private-Token: token0",
+							"replaced Private-Token: token1",
+							"added Deploy-Token: tokenAdded"
+					)
+					.containsSubsequence("Maven Repository $repoPrefix-$existingId is using 'token0'",
+							"Maven Repository $it-renamed is using 'token0'",
+							"Maven Repository $repoPrefix-specialToken is using 'token0'",
+							"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
+							"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
+							"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!"
+					)
+					.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using")
+		}
+	}
+
+	@Test
+	@DisabledIfEnvironmentVariable(
+			named = 'TEST_UPLOAD_TOKEN',
+			matches = '^$',
+			disabledReason = 'Upload deactivated due to missing TEST_UPLOAD_TOKEN'
+	)
+	void "uploadTest"() {
+		def testFile = TestFileUtils.getTestResource(new File(projectDir, 'test.xml'), 'test.xml')
+		settingsGradle = TestFileUtils.getTestResource(new File(projectDir, SETTINGS_GRADLE), SETTINGS_GRADLE)
+		buildGradle = TestFileUtils.getTestResource(new File(projectDir, BUILD_GRADLE), 'build-upload.gradle')
+
+		def uploadRunner = GradleRunner.create()
+		uploadRunner.forwardOutput()
+		uploadRunner.withPluginClasspath()
+		uploadRunner.withArguments("publishTestPublicationToGitLabRepository", "-i", "-s")
+		uploadRunner.withProjectDir(projectDir)
+		def uploadResult = uploadRunner.build()
+		def repoPrefix = "GitLab-Project"
+		assertThat(uploadResult.output)
 				.contains("BUILD SUCCESSFUL")
 				.containsSubsequence(
 						"added Job-Token: jobToken",
+						"added Private-Token: tokenIgnoredNoValue",
 						"added Deploy-Token: token0",
 						"added Deploy-Token: token1",
-						"added Deploy-Token: token2",
 						"Settings evaluated",
-						"replaced Job-Token: jobToken",
-						"replaced Private-Token: token0",
-						"replaced Private-Token: token1",
+						"added Job-Token: jobToken",
+						"added Private-Token: tokenIgnoredNoValue",
+						"added Deploy-Token: token0",
+						"added Deploy-Token: token1",
 						"added Private-Token: testToken"
 				)
-				.contains("publishAllPublicationsToGitLabSettingsTokenRepository")
-				.contains("publishAllPublicationsToGitLabAnyTokenRepository")
-				.contains("publishAllPublicationsToGitLabRepository")
-				.contains("Maven Repository NotAdded was not added, as no token could be applied!\n")
+				.containsSubsequence("Maven Repository $repoPrefix-$existingId is using 'token0'",
+						"Maven Repository $repoPrefix-specialToken is using 'token0'",
+						"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
+						"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
+						"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!",
+						"Maven Repository GitLab is using 'testToken'",
+				)
+				.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using")
+				.contains("Publishing to repository 'GitLab'")
 
-		if (System.getenv('TEST_UPLOAD_TOKEN')) {
-			def uploadRunner = GradleRunner.create()
-			uploadRunner.forwardOutput()
-			uploadRunner.withPluginClasspath()
-			uploadRunner.withArguments("publishTestPublicationToGitLabRepository", "-i", "-s")
-			uploadRunner.withProjectDir(projectDir)
-			def uploadResult = uploadRunner.build()
-			assertThat(uploadResult.output).contains("Publishing to repository 'GitLab'")
-		}
 	}
 
-	def getApply() {
-		"""   
- 			buildscript {
-				dependencies {
-					classpath files($pluginClasspath)
-				}
-			}
-			apply plugin: at.schrottner.gradle.GitlabRepositoriesPlugin
-		"""
-	}
 
 	private BuildResult runTest() {
 		def runner = GradleRunner.create()
@@ -244,16 +210,4 @@ class GitlabRepositoriesPluginFunctionalTests {
 		runner.build()
 	}
 
-	private String generateToken(String... tokenTypes) {
-		def output = ""
-		tokenTypes.eachWithIndex { it, index ->
-			output += """
-			token($it) {
-				it.key = 'token$index'
-				it.value = 'test'
-			}
-			"""
-		}
-		return output
-	}
 }
