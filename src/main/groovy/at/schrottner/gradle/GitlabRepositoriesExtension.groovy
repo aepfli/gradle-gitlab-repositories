@@ -2,15 +2,15 @@ package at.schrottner.gradle
 
 import at.schrottner.gradle.auths.JobToken
 import at.schrottner.gradle.auths.Token
-import at.schrottner.gradle.configurations.GroupConfiguration
-import at.schrottner.gradle.configurations.ProjectConfiguration
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.initialization.Settings
+import org.gradle.api.model.ObjectFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
 
 /**
  * GitLabRepositoriesExtension is the main entry point to configure the plugin
@@ -23,6 +23,7 @@ public class GitlabRepositoriesExtension {
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryHandler)
 	public static final String NAME = "gitLab"
 	private final RepositoryHandler repositories
+	private final ObjectFactory objects
 	private final RepositoryActionHandler handler
 
 	private int afterPosition
@@ -33,21 +34,31 @@ public class GitlabRepositoriesExtension {
 	boolean applyToProject = true
 	Map<String, Token> tokens = [:]
 
-	public final def artifactActionStorage = []
+	public final List<Action<MavenArtifactRepository>> artifactActionStorage = []
 
-	GitlabRepositoriesExtension(Settings settings) {
+	GitlabRepositoriesExtension(Settings settings, ObjectFactory objects) {
+		this.objects = objects
 		this.logPrefix = "$Config.LOG_PREFIX Settings"
 		this.repositories = settings.pluginManagement.repositories
 		handler = new RepositoryActionHandler(this)
 		setup()
 	}
 
-	GitlabRepositoriesExtension(Project project) {
+	GitlabRepositoriesExtension(Project project, ObjectFactory objects) {
+		this.objects = objects
 		this.logPrefix = "$Config.LOG_PREFIX Project ($project.name)"
 		this.repositories = project.repositories
-		migrateSettingsTokens(project)
 		handler = new RepositoryActionHandler(this)
-		setup()
+		if (tokens) {
+			this.tokens = tokens
+		} else {
+			setup()
+		}
+		if (artifactActionStorage) {
+			artifactActionStorage.each { artifactRepo ->
+//				applyMaven(artifactRepo)
+			}
+		}
 	}
 
 	private void migrateSettingsTokens(Project project) {
@@ -93,31 +104,40 @@ public class GitlabRepositoriesExtension {
 	}
 
 	MavenArtifactRepository upload(def delegate, String id, Action<RepositoryConfiguration> configAction = null) {
-		mavenInternal(new ProjectConfiguration(id: id), configAction) { repo ->
+		RepositoryConfiguration repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.PROJECT)
+		mavenInternal(repositoryConfiguration, configAction) { repo ->
 			delegate.maven(repo)
 		}
+	}
+
+	private RepositoryConfiguration generateRepositoryConfiguration(String id, GitLabEntityType entityType) {
+		RepositoryConfiguration repositoryConfiguration = objects.newInstance(RepositoryConfiguration.class)
+		repositoryConfiguration.id = id
+		repositoryConfiguration.type = entityType
+		repositoryConfiguration
 	}
 
 	/**
 	 * @deprecated use{@link #group(java.lang.String, org.gradle.api.Action)} or {@link #project(java.lang.String, org.gradle.api.Action)}
 	 */
 	@Deprecated
-	MavenArtifactRepository maven(String id, Action<RepositoryConfiguration> configAction = null) {
+	MavenArtifactRepository maven(String id, Action<? super RepositoryConfiguration> configAction = null) {
 		group(id, configAction)
 	}
 
-	MavenArtifactRepository group(String id, Action<RepositoryConfiguration> configAction = null) {
-		mavenInternal(new GroupConfiguration(id: id), configAction)
+	MavenArtifactRepository group(String id, Action<? super RepositoryConfiguration> configAction = null) {
+		def repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.GROUP)
+		mavenInternal(repositoryConfiguration, configAction)
 	}
 
-	MavenArtifactRepository project(String id, Action<RepositoryConfiguration> configAction = null) {
-
-		mavenInternal(new ProjectConfiguration(id: id), configAction)
+	MavenArtifactRepository project(String id, Action<? super RepositoryConfiguration> configAction = null) {
+		def repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.PROJECT)
+		mavenInternal(repositoryConfiguration, configAction)
 	}
 
 
 	MavenArtifactRepository mavenInternal(RepositoryConfiguration repositoryConfiguration,
-										  Action<RepositoryConfiguration> configAction = null,
+										  Action<? super RepositoryConfiguration> configAction = null,
 										  Closure<MavenArtifactRepository> action = null) {
 
 		if (!repositoryConfiguration.id) {
@@ -126,7 +146,6 @@ public class GitlabRepositoriesExtension {
 		}
 
 		configAction?.execute(repositoryConfiguration)
-
 
 		def artifactRepo = handler.generate(repositoryConfiguration)
 

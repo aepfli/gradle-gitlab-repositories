@@ -135,11 +135,43 @@ class GitlabRepositoriesPluginFunctionalTests {
 							"added Deploy-Token: token0",
 							"added Deploy-Token: token1",
 							"Settings evaluated",
+							"replaced Private-Token: tokenIgnoredNoValue",
+							"replaced Private-Token: token0",
+							"replaced Private-Token: token1",
+							"added Deploy-Token: tokenAdded"
+					)
+					.containsSubsequence("Maven Repository $repoPrefix-$existingId is using 'token0'",
+							"Maven Repository $it-renamed is using 'token0'",
+							"Maven Repository $repoPrefix-specialToken is using 'token0'",
+							"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
+							"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
+							"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!"
+					)
+					.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using '")
+		}
+	}
+
+	@Test
+	void "used in settings and project without applying"() {
+		//given:
+		settingsGradle = TestFileUtils.getTestResource(new File(projectDir, SETTINGS_GRADLE), SETTINGS_GRADLE)
+		buildGradle = TestFileUtils.getTestResource(new File(projectDir, BUILD_GRADLE), "build-withoutApplying.gradle")
+
+		//when:
+		BuildResult result = runTest()
+
+		//then:
+		realms.each {
+			def capitalized = it.capitalize()
+			def repoPrefix = "GitLab-${capitalized}"
+			assertThat(result.output)
+					.contains("BUILD SUCCESSFUL")
+					.containsSubsequence(
 							"added Job-Token: jobToken",
 							"added Private-Token: tokenIgnoredNoValue",
 							"added Deploy-Token: token0",
 							"added Deploy-Token: token1",
-							"replaced Job-Token: jobToken",
+							"Settings evaluated",
 							"replaced Private-Token: tokenIgnoredNoValue",
 							"replaced Private-Token: token0",
 							"replaced Private-Token: token1",

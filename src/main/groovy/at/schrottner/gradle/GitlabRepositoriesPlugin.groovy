@@ -7,20 +7,23 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.initialization.Settings
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.ExtraPropertiesExtension
 
-/**
- * TODO:
- * 	- implement passing on configuration from Settings to Plugin, in a way that it can not be overwritten
- */
+import javax.inject.Inject
+
 class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 
-	void apply(ExtensionAware extensionAware) {
+	ObjectFactory objects
 
-		extensionAware.extensions.extraProperties.set('DeployToken', DeployToken.class)
-		extensionAware.extensions.extraProperties.set('PrivateToken', PrivateToken.class)
-		extensionAware.extensions.extraProperties.set('JobToken', JobToken.class)
+	@Inject
+	GitlabRepositoriesPlugin(ObjectFactory objectFactory) {
+		this.objects = objectFactory
+	}
+
+	void apply(ExtensionAware extensionAware) {
+		addProps(extensionAware)
 
 		if (extensionAware instanceof Project) {
 			apply(extensionAware)
@@ -29,13 +32,29 @@ class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 		}
 	}
 
+	void addProps(ExtensionAware extensionAware) {
+		extensionAware.extensions.extraProperties.set('DeployToken', DeployToken.class)
+		extensionAware.extensions.extraProperties.set('PrivateToken', PrivateToken.class)
+		extensionAware.extensions.extraProperties.set('JobToken', JobToken.class)
+	}
+
 	void apply(Settings extensionAware) {
-		GitlabRepositoriesExtension extension = extensionAware.extensions.create(GitlabRepositoriesExtension.NAME, GitlabRepositoriesExtension, (Settings) extensionAware)
-		extensionAware.gradle.beforeProject { project ->
-			if (extension.applyToProject)
+		GitlabRepositoriesExtension extension = extensionAware.extensions.create(
+				GitlabRepositoriesExtension.NAME,
+				GitlabRepositoriesExtension,
+				(Settings) extensionAware,
+				objects
+		)
+		extensionAware.gradle.beforeProject { Project project ->
+			if (extension.applyToProject) {
 				applyProjects(extension, project)
-		}
-		extensionAware.gradle.beforeProject { project ->
+				addProps(project)
+				project.extensions.add(
+						GitlabRepositoriesExtension.NAME,
+						extension
+				)
+			}
+
 			def ext = project.extensions.findByName(ExtraPropertiesExtension.EXTENSION_NAME)
 			ext.gitLabTokens = extension.tokens
 		}
@@ -46,7 +65,8 @@ class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 				extensionAware.extensions.create(
 						GitlabRepositoriesExtension.NAME,
 						GitlabRepositoriesExtension,
-						(Project) extensionAware
+						(Project) extensionAware,
+						objects
 				)
 
 		def task = extensionAware.tasks.maybeCreate('gitLabTask', DefaultTask)

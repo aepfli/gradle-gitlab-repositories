@@ -38,19 +38,19 @@ class RepositoryActionHandler {
 	private List computeTokenInformation(RepositoryConfiguration repositoryConfiguration) {
 		Token token
 		Set<String> tokenList
-		if (repositoryConfiguration.tokenSelector) {
-			logger.info("${logPrefix(repositoryConfiguration)} is using Single Token Selector '$repositoryConfiguration.tokenSelector' " +
+		if (repositoryConfiguration.tokenSelector.getOrNull()) {
+			logger.info("${logPrefix(repositoryConfiguration)} is using Single Token Selector '${repositoryConfiguration.tokenSelector.get()}' " +
 					"- other tokens will be ignored")
 
-			def t = tokens.get(repositoryConfiguration.tokenSelector)
-			token = t.value ? t : null
-			tokenList = [repositoryConfiguration.tokenSelector]
-		} else if (repositoryConfiguration.tokenSelectors) {
-			token = repositoryConfiguration.tokenSelectors.findResult {
+			def t = tokens.get(repositoryConfiguration.tokenSelector.get())
+			token = t?.value ? t : null
+			tokenList = [repositoryConfiguration.tokenSelector.get()]
+		} else if (repositoryConfiguration.tokenSelectors.getOrNull()) {
+			token = repositoryConfiguration.tokenSelectors.get().findResult {
 				def t = tokens.get(it)
-				return t.value ? t : null
+				return t?.value ? t : null
 			}
-			tokenList = repositoryConfiguration.tokenSelectors
+			tokenList = repositoryConfiguration.tokenSelectors.get()
 		} else {
 			token = tokens.values().find {
 				it.value
@@ -86,19 +86,16 @@ class RepositoryActionHandler {
 	}
 
 	private String buildName(RepositoryConfiguration repositoryConfiguration) {
-		if (repositoryConfiguration.name) {
-			return repositoryConfiguration.name
-		}
-		return "$REPOSITORY_PREFIX-$repositoryConfiguration.type-$repositoryConfiguration.id"
+		return repositoryConfiguration.name.getOrElse("$REPOSITORY_PREFIX-${repositoryConfiguration.type.get()}-${repositoryConfiguration.id.get()}")
 	}
 
 	private String buildUrl(RepositoryConfiguration repositoryConfiguration) {
-		switch (repositoryConfiguration.type) {
+		switch (repositoryConfiguration.type.get()) {
 			case GitLabEntityType.PROJECT:
-				"https://$baseUrl/api/v4/${GitLabEntityType.PROJECT.endpoint}/$repositoryConfiguration.id/packages/maven"
+				"https://$baseUrl/api/v4/${GitLabEntityType.PROJECT.endpoint}/${repositoryConfiguration.id.get()}/packages/maven"
 				break
 			case Config.GROUP:
-				"https://$baseUrl/api/v4/${GitLabEntityType.GROUP.endpoint}/$repositoryConfiguration.id/-/packages/maven"
+				"https://$baseUrl/api/v4/${GitLabEntityType.GROUP.endpoint}/${repositoryConfiguration.id.get()}/-/packages/maven"
 				break
 		}
 	}

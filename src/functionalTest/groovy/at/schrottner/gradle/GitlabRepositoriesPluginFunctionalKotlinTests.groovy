@@ -105,7 +105,6 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 						"added Deploy-Token: token0",
 						"added Deploy-Token: token1",
 						"Settings evaluated",
-						"replaced Job-Token: jobToken",
 						"replaced Private-Token: token0",
 						"replaced Private-Token: token1"
 				)
