@@ -27,18 +27,5 @@ repositories {
 	realms.split(',').each { realm ->
 
 		gitLab."$realm"("$existingId")
-		gitLab."$realm"("$renamedId") { name = "$realm-renamed" }
-		gitLab."$realm"("specialToken") {
-			tokenSelector = "token0"
-		}
-		gitLab."$realm"("specialToken1") {
-			tokenSelector = "token1"
-		}
-		gitLab."$realm"("specialTokenSelection") {
-			tokenSelectors = ["jobToken", "token1"]
-		}
-		gitLab."$realm"("ignoredNoValue") {
-			tokenSelector = "tokenIgnoredNoValue"
-		}
 	}
 }

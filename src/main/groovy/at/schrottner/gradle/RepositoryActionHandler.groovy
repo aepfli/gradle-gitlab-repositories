@@ -27,8 +27,8 @@ class RepositoryActionHandler {
 		(token, tokenList) = computeTokenInformation(repositoryConfiguration)
 
 		if (token) {
-			logger.info("${logPrefix(repositoryConfiguration)} is using '${token.key}'")
-			def artifactRepo = generateArtifactRepositoryAction(repositoryConfiguration, token)
+			logger.info("${logPrefix(repositoryConfiguration)} is using '${token.key}' '${token.value}'")
+			Action<MavenArtifactRepository> artifactRepo = generateArtifactRepositoryAction(repositoryConfiguration, token)
 			return artifactRepo
 		} else {
 			return handleInapplicableTokenCase(repositoryConfiguration, tokenList)

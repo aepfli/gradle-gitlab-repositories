@@ -9,6 +9,8 @@
  */
 package at.schrottner.gradle
 
+import org.gradle.internal.impldep.org.apache.commons.io.FileUtils
+
 import static org.assertj.core.api.Assertions.assertThat
 
 import java.nio.file.Files
@@ -204,12 +206,7 @@ class GitlabRepositoriesPluginFunctionalTests {
 		settingsGradle = TestFileUtils.getTestResource(new File(projectDir, SETTINGS_GRADLE), SETTINGS_GRADLE)
 		buildGradle = TestFileUtils.getTestResource(new File(projectDir, BUILD_GRADLE), 'build-upload.gradle')
 
-		def uploadRunner = GradleRunner.create()
-		uploadRunner.forwardOutput()
-		uploadRunner.withPluginClasspath()
-		uploadRunner.withArguments("publishTestPublicationToGitLabRepository", "-i", "-s")
-		uploadRunner.withProjectDir(projectDir)
-		def uploadResult = uploadRunner.build()
+		def uploadResult = runTest("publishTestPublicationToGitLabRepository", "-i", "-s")
 		def repoPrefix = "GitLab-Project"
 		assertThat(uploadResult.output)
 				.contains("BUILD SUCCESSFUL")
@@ -219,10 +216,6 @@ class GitlabRepositoriesPluginFunctionalTests {
 						"added Deploy-Token: token0",
 						"added Deploy-Token: token1",
 						"Settings evaluated",
-						"added Job-Token: jobToken",
-						"added Private-Token: tokenIgnoredNoValue",
-						"added Deploy-Token: token0",
-						"added Deploy-Token: token1",
 						"added Private-Token: testToken"
 				)
 				.containsSubsequence("Maven Repository $repoPrefix-$existingId is using 'token0'",
@@ -237,12 +230,22 @@ class GitlabRepositoriesPluginFunctionalTests {
 
 	}
 
+	@Test
+	void "subprojectTest"() {
+		//given:
+		FileUtils.copyDirectory(new File(ClassLoader.getSystemClassLoader().getResource('subprojectTest').toURI()), projectDir)
 
-	private BuildResult runTest() {
+		//when:
+		BuildResult result = runTest()
+		assertThat(result.output)
+				.contains("BUILD SUCCESSFUL")
+	}
+
+	private BuildResult runTest(String[] args = ["tasks", "-i", "-s"]) {
 		def runner = GradleRunner.create()
 		runner.forwardOutput()
 		runner.withPluginClasspath()
-		runner.withArguments("tasks", "-i", "-s")
+		runner.withArguments(args)
 		runner.withProjectDir(projectDir)
 		runner.build()
 	}

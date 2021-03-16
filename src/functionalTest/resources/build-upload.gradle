@@ -3,9 +3,11 @@ buildscript {
 		classpath files(pluginClasspath.split(','))
 	}
 }
+
 plugins {
 	id 'maven-publish'
 }
+
 apply plugin: at.schrottner.gradle.GitlabRepositoriesPlugin
 
 gitLab {
@@ -16,7 +18,7 @@ gitLab {
 }
 publishing {
 	repositories {
-		gitLab.upload(owner, "")
+		//gitLab.upload(owner, "")
 		gitLab.upload(owner, "$existingId")
 		gitLab.upload(owner, "specialToken") {
 			tokenSelector = "token0"

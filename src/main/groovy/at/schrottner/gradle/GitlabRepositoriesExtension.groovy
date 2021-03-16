@@ -49,27 +49,23 @@ public class GitlabRepositoriesExtension {
 		this.logPrefix = "$Config.LOG_PREFIX Project ($project.name)"
 		this.repositories = project.repositories
 		handler = new RepositoryActionHandler(this)
-		if (tokens) {
-			this.tokens = tokens
-		} else {
+
+		if (!migrateSettingsTokens(project)) {
 			setup()
-		}
-		if (artifactActionStorage) {
-			artifactActionStorage.each { artifactRepo ->
-//				applyMaven(artifactRepo)
-			}
 		}
 	}
 
-	private void migrateSettingsTokens(Project project) {
+	private boolean migrateSettingsTokens(Project project) {
 		if (project.extensions.extraProperties.has('gitLabTokens')) {
 			def passedOnTokens = (project.extensions.extraProperties['gitLabTokens'] ?: [:]) as Map<String, Object>
 			passedOnTokens.each { key, value ->
-				token(Class.forName(value.getClass().name) as Class<? extends Token>) {
-					it.key = value['key']
-					it.value = value['value']
-				}
+				def token = (Class.forName(value.getClass().name) as Class<? extends Token>).newInstance()
+				token.key = key
+				token.value = value.value
+				logger.info("$Config.LOG_PREFIX Project ($project.name) readding Token from Parent $token.name: $token.key")
+				tokens.put(token.key, token)
 			}
+			return true
 		}
 	}
 
@@ -103,7 +99,7 @@ public class GitlabRepositoriesExtension {
 		afterPosition = repositories.indexOf(repositories.findByName(afterRepository))
 	}
 
-	MavenArtifactRepository upload(def delegate, String id, Action<RepositoryConfiguration> configAction = null) {
+	def upload(def delegate, String id, Action<? super RepositoryConfiguration> configAction = null) {
 		RepositoryConfiguration repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.PROJECT)
 		mavenInternal(repositoryConfiguration, configAction) { repo ->
 			delegate.maven(repo)
@@ -121,7 +117,7 @@ public class GitlabRepositoriesExtension {
 	 * @deprecated use{@link #group(java.lang.String, org.gradle.api.Action)} or {@link #project(java.lang.String, org.gradle.api.Action)}
 	 */
 	@Deprecated
-	def maven8(String id, Action<? super RepositoryConfiguration> configAction = null) {
+	def maven(String id, Action<? super RepositoryConfiguration> configAction = null) {
 		group(id, configAction)
 	}
 
@@ -135,10 +131,9 @@ public class GitlabRepositoriesExtension {
 		mavenInternal(repositoryConfiguration, configAction)
 	}
 
-
 	def mavenInternal(RepositoryConfiguration repositoryConfiguration,
 					  Action<? super RepositoryConfiguration> configAction = null,
-					  Closure<MavenArtifactRepository> action = null) {
+					  Closure<Action<MavenArtifactRepository>> action = null) {
 
 		if (!repositoryConfiguration.id) {
 			logger.info("$logPrefix: No ID provided nothing will happen here :)")
@@ -147,21 +142,20 @@ public class GitlabRepositoriesExtension {
 
 		configAction?.execute(repositoryConfiguration)
 
-		def artifactRepo = handler.generate(repositoryConfiguration)
+		Action<MavenArtifactRepository> artifactRepo = handler.generate(repositoryConfiguration)
 
-		return artifactRepo
-		/*
-		if (artifactRepo)
+		if (artifactRepo) {
 			if (action)
 				action(artifactRepo)
 			else
 				applyMaven(artifactRepo)
 
-		 */
+			artifactActionStorage.add artifactRepo
+			artifactRepo
+		}
 	}
 
 	private MavenArtifactRepository applyMaven(Action<MavenArtifactRepository> artifactRepo) {
-		artifactActionStorage.add artifactRepo
 		def repo = repositories.maven(artifactRepo)
 
 		repositories.remove(repo)
