@@ -121,24 +121,24 @@ public class GitlabRepositoriesExtension {
 	 * @deprecated use{@link #group(java.lang.String, org.gradle.api.Action)} or {@link #project(java.lang.String, org.gradle.api.Action)}
 	 */
 	@Deprecated
-	MavenArtifactRepository maven(String id, Action<? super RepositoryConfiguration> configAction = null) {
+	def maven8(String id, Action<? super RepositoryConfiguration> configAction = null) {
 		group(id, configAction)
 	}
 
-	MavenArtifactRepository group(String id, Action<? super RepositoryConfiguration> configAction = null) {
+	def group(String id, Action<? super RepositoryConfiguration> configAction = null) {
 		def repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.GROUP)
 		mavenInternal(repositoryConfiguration, configAction)
 	}
 
-	MavenArtifactRepository project(String id, Action<? super RepositoryConfiguration> configAction = null) {
+	def project(String id, Action<? super RepositoryConfiguration> configAction = null) {
 		def repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.PROJECT)
 		mavenInternal(repositoryConfiguration, configAction)
 	}
 
 
-	MavenArtifactRepository mavenInternal(RepositoryConfiguration repositoryConfiguration,
-										  Action<? super RepositoryConfiguration> configAction = null,
-										  Closure<MavenArtifactRepository> action = null) {
+	def mavenInternal(RepositoryConfiguration repositoryConfiguration,
+					  Action<? super RepositoryConfiguration> configAction = null,
+					  Closure<MavenArtifactRepository> action = null) {
 
 		if (!repositoryConfiguration.id) {
 			logger.info("$logPrefix: No ID provided nothing will happen here :)")
@@ -149,11 +149,15 @@ public class GitlabRepositoriesExtension {
 
 		def artifactRepo = handler.generate(repositoryConfiguration)
 
+		return artifactRepo
+		/*
 		if (artifactRepo)
 			if (action)
 				action(artifactRepo)
 			else
 				applyMaven(artifactRepo)
+
+		 */
 	}
 
 	private MavenArtifactRepository applyMaven(Action<MavenArtifactRepository> artifactRepo) {

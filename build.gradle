@@ -14,6 +14,21 @@ plugins {
 
 version = "${gitVersion()}".replaceFirst(~/^v/, '')
 
+spotless {
+	groovy {
+		importOrder() // standard import order
+
+		excludeJava()
+		greclipse()
+
+		licenseHeaderFile file("license-header.spotless") // or licenseHeaderFile
+	}
+	groovyGradle {
+		target '*.gradle' // default target of groovyGradle
+		greclipse()
+	}
+}
+
 repositories {
 	mavenCentral()
 }
@@ -66,7 +81,11 @@ gradlePlugin {
 pluginBundle {
 	website = 'http://schrottner.at/gradle-gitlab-repositories/'
 	vcsUrl = 'https://github.com/aepfli/gradle-gitlab-repositories.git'
-	tags = ['GitLab', 'repositories', 'maven']
+	tags = [
+		'GitLab',
+		'repositories',
+		'maven'
+	]
 }
 
 test {
@@ -78,7 +97,6 @@ test {
 
 sourceSets {
 	functionalTest {
-
 	}
 }
 

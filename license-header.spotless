@@ -7,11 +7,3 @@
  *
  * http://www.eclipse.org/legal/epl-v20.html
  */
-package at.schrottner.gradle.auths
-
-class PrivateToken extends Token {
-
-	PrivateToken() {
-		super('Private-Token')
-	}
-}
