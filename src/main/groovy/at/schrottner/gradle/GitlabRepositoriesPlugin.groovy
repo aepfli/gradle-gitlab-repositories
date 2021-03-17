@@ -9,7 +9,6 @@ import org.gradle.api.Project
 import org.gradle.api.initialization.Settings
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.ExtensionAware
-import org.gradle.api.plugins.ExtraPropertiesExtension
 import org.gradle.internal.extensibility.DefaultExtraPropertiesExtension
 
 import javax.inject.Inject
@@ -48,20 +47,19 @@ class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 		)
 
 		extensionAware.gradle.beforeProject { Project project ->
+			def ext = project.extensions.findByName(DefaultExtraPropertiesExtension.EXTENSION_NAME)
+			ext.gitLabTokens = extension.tokens
 			if (extension.applyToProject) {
 				applyProjects(extension, project)
 				addProps(project)
+				project.extensions.create(
+						GitlabRepositoriesExtension.NAME,
+						GitlabRepositoriesExtension,
+						project,
+						objects,
+						extension
+				)
 			}
-
-			def ext = project.extensions.findByName(DefaultExtraPropertiesExtension.EXTENSION_NAME)
-			ext.gitLabTokens = extension.tokens
-
-			project.extensions.create(
-					GitlabRepositoriesExtension.NAME,
-					GitlabRepositoriesExtension,
-					project,
-					objects
-			)
 		}
 	}
 

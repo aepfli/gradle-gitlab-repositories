@@ -26,13 +26,13 @@ class RepositoryActionHandler {
 		Set<String> tokenList
 		(token, tokenList) = computeTokenInformation(repositoryConfiguration)
 
-		if (token) {
-			logger.info("${logPrefix(repositoryConfiguration)} is using '${token.key}' '${token.value}'")
-			Action<MavenArtifactRepository> artifactRepo = generateArtifactRepositoryAction(repositoryConfiguration, token)
-			return artifactRepo
+		if (!token) {
+			handleInapplicableTokenCase(repositoryConfiguration, tokenList)
 		} else {
-			return handleInapplicableTokenCase(repositoryConfiguration, tokenList)
+			logger.info("${logPrefix(repositoryConfiguration)} is using '${token.key}' '${token.value}'")
 		}
+		Action<MavenArtifactRepository> artifactRepo = generateArtifactRepositoryAction(repositoryConfiguration, token)
+		return artifactRepo
 	}
 
 	private List computeTokenInformation(RepositoryConfiguration repositoryConfiguration) {
@@ -72,8 +72,8 @@ class RepositoryActionHandler {
 				mvn.name = buildName(repositoryConfiguration)
 
 				mvn.credentials(HttpHeaderCredentials) {
-					it.name = token.name
-					it.value = token.value
+					it.name = token?.name
+					it.value = token?.value
 				}
 				mvn.authentication(new Action<AuthenticationContainer>() {
 					@Override
@@ -86,21 +86,21 @@ class RepositoryActionHandler {
 	}
 
 	private String buildName(RepositoryConfiguration repositoryConfiguration) {
-		return repositoryConfiguration.name.getOrElse("$REPOSITORY_PREFIX-${repositoryConfiguration.type.get()}-${repositoryConfiguration.id.get()}")
+		return repositoryConfiguration.name.getOrElse("$REPOSITORY_PREFIX-${repositoryConfiguration.entityType}-${repositoryConfiguration.id}")
 	}
 
 	private String buildUrl(RepositoryConfiguration repositoryConfiguration) {
-		switch (repositoryConfiguration.type.get()) {
+		switch (repositoryConfiguration.entityType) {
 			case GitLabEntityType.PROJECT:
-				"https://$baseUrl/api/v4/${GitLabEntityType.PROJECT.endpoint}/${repositoryConfiguration.id.get()}/packages/maven"
+				"https://$baseUrl/api/v4/${GitLabEntityType.PROJECT.endpoint}/${repositoryConfiguration.id}/packages/maven"
 				break
 			case Config.GROUP:
-				"https://$baseUrl/api/v4/${GitLabEntityType.GROUP.endpoint}/${repositoryConfiguration.id.get()}/-/packages/maven"
+				"https://$baseUrl/api/v4/${GitLabEntityType.GROUP.endpoint}/${repositoryConfiguration.id}/-/packages/maven"
 				break
 		}
 	}
 
-	private handleInapplicableTokenCase(RepositoryConfiguration repositoryConfiguration, Set<String> applicableTokens) {
+	private void handleInapplicableTokenCase(RepositoryConfiguration repositoryConfiguration, Set<String> applicableTokens) {
 		logger.error("${logPrefix(repositoryConfiguration)} was not added, as no token could be applied!\n\t" +
 				"\n\t" +
 				"#################################################################################### \n\t" +
@@ -115,6 +115,5 @@ class RepositoryActionHandler {
 				"#################################################################################### \n\t" +
 				"#################################################################################### \n\t" +
 				"")
-		return null
 	}
 }

@@ -2,6 +2,7 @@ package at.schrottner.gradle
 
 import at.schrottner.gradle.auths.JobToken
 import at.schrottner.gradle.auths.Token
+import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.RepositoryHandler
@@ -18,7 +19,8 @@ import org.slf4j.LoggerFactory
  * It provides additional methods to automatically add repositories based on GitLab Groups
  * or Projects.
  */
-public class GitlabRepositoriesExtension {
+@CompileStatic
+class GitlabRepositoriesExtension {
 
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryHandler)
 	public static final String NAME = "gitLab"
@@ -26,11 +28,7 @@ public class GitlabRepositoriesExtension {
 	private final ObjectFactory objects
 	private final RepositoryActionHandler handler
 
-	private int afterPosition
-	private String logPrefix
-
 	String baseUrl = "gitlab.com"
-	String afterRepository = 'MavenLocal'
 	boolean applyToProject = true
 	Map<String, Token> tokens = [:]
 
@@ -38,18 +36,18 @@ public class GitlabRepositoriesExtension {
 
 	GitlabRepositoriesExtension(Settings settings, ObjectFactory objects) {
 		this.objects = objects
-		this.logPrefix = "$Config.LOG_PREFIX Settings"
 		this.repositories = settings.pluginManagement.repositories
 		handler = new RepositoryActionHandler(this)
 		setup()
 	}
 
-	GitlabRepositoriesExtension(Project project, ObjectFactory objects) {
+	GitlabRepositoriesExtension(Project project, ObjectFactory objects, GitlabRepositoriesExtension parent = null) {
 		this.objects = objects
-		this.logPrefix = "$Config.LOG_PREFIX Project ($project.name)"
 		this.repositories = project.repositories
 		handler = new RepositoryActionHandler(this)
-
+		if (parent) {
+			this.baseUrl = parent.baseUrl
+		}
 		if (!migrateSettingsTokens(project)) {
 			setup()
 		}
@@ -61,55 +59,38 @@ public class GitlabRepositoriesExtension {
 			passedOnTokens.each { key, value ->
 				def token = (Class.forName(value.getClass().name) as Class<? extends Token>).newInstance()
 				token.key = key
-				token.value = value.value
-				logger.info("$Config.LOG_PREFIX Project ($project.name) readding Token from Parent $token.name: $token.key")
+				token.value = value['value']
+				logger.info("$Config.LOG_PREFIX readding Token from Parent $token.name: $token.key")
 				tokens.put(token.key, token)
 			}
 			return true
 		}
+		return false
 	}
 
 	void setup() {
-		logger.info("$logPrefix initializing")
+		logger.info("$Config.LOG_PREFIX initializing")
 		token(JobToken, {
 			it.key = 'jobToken'
 			it.value = System.getenv("CI_JOB_TOKEN")
 		})
-		afterPosition = repositories.indexOf(repositories.findByName(afterRepository))
 	}
 
 	void token(Class<? extends Token> tokenClass, Action<Token> action) {
 		def token = tokenClass.newInstance();
 		action.execute(token)
 
-		logger.info("$logPrefix ${tokens.containsKey(token.key) ? "replaced" : "added"} $token.name: $token.key")
+		logger.info("$Config.LOG_PREFIX ${tokens.containsKey(token.key) ? "replaced" : "added"} $token.name: $token.key")
 		tokens.put(token.key, token)
 	}
 
-	/**
-	 * TODO:
-	 * 		Improve this logic, currently we are only allowed to set this once, and all will be added consecutively.
-	 * 		This is not ideal, and also not really a nice solution. We also want to be able to add overwrite this per
-	 * 		repository.
-	 *
-	 * @param afterRepository
-	 */
-	void setAfterRepository(String afterRepository) {
-		this.afterRepository = afterRepository
-		afterPosition = repositories.indexOf(repositories.findByName(afterRepository))
-	}
-
-	def upload(def delegate, String id, Action<? super RepositoryConfiguration> configAction = null) {
+	def upload(String id, Action<? super RepositoryConfiguration> configAction = null) {
 		RepositoryConfiguration repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.PROJECT)
-		mavenInternal(repositoryConfiguration, configAction) { repo ->
-			delegate.maven(repo)
-		}
+		mavenInternal(repositoryConfiguration, configAction)
 	}
 
 	private RepositoryConfiguration generateRepositoryConfiguration(String id, GitLabEntityType entityType) {
-		RepositoryConfiguration repositoryConfiguration = objects.newInstance(RepositoryConfiguration.class)
-		repositoryConfiguration.id = id
-		repositoryConfiguration.type = entityType
+		RepositoryConfiguration repositoryConfiguration = objects.newInstance(RepositoryConfiguration.class, id, entityType)
 		repositoryConfiguration
 	}
 
@@ -132,35 +113,18 @@ public class GitlabRepositoriesExtension {
 	}
 
 	def mavenInternal(RepositoryConfiguration repositoryConfiguration,
-					  Action<? super RepositoryConfiguration> configAction = null,
-					  Closure<Action<MavenArtifactRepository>> action = null) {
+					  Action<? super RepositoryConfiguration> configAction = null) {
 
 		if (!repositoryConfiguration.id) {
-			logger.info("$logPrefix: No ID provided nothing will happen here :)")
-			return null
+			logger.info("$Config.LOG_PREFIX: No ID provided - project will be added anyways, but will not be used")
 		}
 
 		configAction?.execute(repositoryConfiguration)
 
 		Action<MavenArtifactRepository> artifactRepo = handler.generate(repositoryConfiguration)
 
-		if (artifactRepo) {
-			if (action)
-				action(artifactRepo)
-			else
-				applyMaven(artifactRepo)
+		artifactActionStorage.add artifactRepo
 
-			artifactActionStorage.add artifactRepo
-			artifactRepo
-		}
-	}
-
-	private MavenArtifactRepository applyMaven(Action<MavenArtifactRepository> artifactRepo) {
-		def repo = repositories.maven(artifactRepo)
-
-		repositories.remove(repo)
-
-		repositories.add(++afterPosition, repo)
-		repo
+		return artifactRepo
 	}
 }

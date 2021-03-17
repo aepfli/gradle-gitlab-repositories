@@ -26,6 +26,6 @@ gitLab {
 repositories {
 	realms.split(',').each { realm ->
 
-		gitLab."$realm"("$existingId")
+		maven gitLab."$realm"("$existingId")
 	}
 }

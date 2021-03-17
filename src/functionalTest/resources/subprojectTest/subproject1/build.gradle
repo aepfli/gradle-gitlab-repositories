@@ -14,14 +14,18 @@ gitLab {
 		it.key = 'tokenAdded1'
 		it.value = 'project1'
 	}
+	token(DeployToken) {
+		it.key = 'token0'
+		it.value = 'test'
+	}
 }
 
 repositories {
 	realms.split(',').each { realm ->
-		gitLab."$realm"("tokentest") {
+		maven gitLab."$realm"("tokentest") {
 			tokenSelector = "tokenAdded"
 		}
-		gitLab."$realm"("tokentest1") {
+		maven gitLab."$realm"("tokentest1") {
 			tokenSelector = "tokenAdded1"
 		}
 	}

@@ -16,20 +16,22 @@ gitLab {
 		it.value = 'test'
 	}
 }
-realms.split(',').each { realm ->
+repositories {
+	realms.split(',').each { realm ->
 
-	gitLab."$realm"("$existingId")
-	gitLab."$realm"("$renamedId") { name = "$realm-renamed" }
-	gitLab."$realm"("specialToken") {
-		tokenSelector = "token0"
-	}
-	gitLab."$realm"("specialToken1") {
-		tokenSelector = "token1"
-	}
-	gitLab."$realm"("specialTokenSelection") {
-		tokenSelectors = ["jobToken", "token1"]
-	}
-	gitLab."$realm"("ignoredNoValue") {
-		tokenSelector = "tokenIgnoredNoValue"
+		maven gitLab."$realm"("$existingId")
+		maven gitLab."$realm"("$renamedId") { name = "$realm-renamed" }
+		maven gitLab."$realm"("specialToken") {
+			tokenSelector = "token0"
+		}
+		maven gitLab."$realm"("specialToken1") {
+			tokenSelector = "token1"
+		}
+		maven gitLab."$realm"("specialTokenSelection") {
+			tokenSelectors = ["jobToken", "token1"]
+		}
+		maven gitLab."$realm"("ignoredNoValue") {
+			tokenSelector = "tokenIgnoredNoValue"
+		}
 	}
 }

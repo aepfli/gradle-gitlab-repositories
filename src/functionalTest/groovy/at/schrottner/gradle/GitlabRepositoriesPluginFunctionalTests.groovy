@@ -239,6 +239,37 @@ class GitlabRepositoriesPluginFunctionalTests {
 		BuildResult result = runTest()
 		assertThat(result.output)
 				.contains("BUILD SUCCESSFUL")
+				.containsSubsequence(
+						"added Job-Token: jobToken",
+						"added Private-Token: tokenIgnoredNoValue",
+						"added Deploy-Token: token0",
+						"added Deploy-Token: token1",
+						"Settings evaluated",
+						"Configure project :",
+						"readding Token from Parent Job-Token: jobToken",
+						"readding Token from Parent Private-Token: tokenIgnoredNoValue",
+						"readding Token from Parent Deploy-Token: token0",
+						"readding Token from Parent Deploy-Token: token1",
+						"replaced Private-Token: tokenIgnoredNoValue",
+						"replaced Private-Token: token0",
+						"replaced Private-Token: token1",
+						"Configure project :subproject1",
+						"readding Token from Parent Job-Token: jobToken",
+						"readding Token from Parent Private-Token: tokenIgnoredNoValue",
+						"readding Token from Parent Deploy-Token: token0",
+						"readding Token from Parent Deploy-Token: token1",
+						"added Deploy-Token: tokenAdded",
+						"added Deploy-Token: tokenAdded1",
+						"replaced Deploy-Token: token0",
+						"Configure project :subproject2",
+						"readding Token from Parent Job-Token: jobToken",
+						"readding Token from Parent Private-Token: tokenIgnoredNoValue",
+						"readding Token from Parent Deploy-Token: token0",
+						"readding Token from Parent Deploy-Token: token1",
+						"added Deploy-Token: tokenAdded",
+						"added Deploy-Token: tokenAdded1",
+						"replaced Deploy-Token: token0",
+				)
 	}
 
 	private BuildResult runTest(String[] args = ["tasks", "-i", "-s"]) {

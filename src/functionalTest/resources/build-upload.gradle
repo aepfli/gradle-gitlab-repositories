@@ -16,23 +16,23 @@ gitLab {
 		it.value = System.getenv('TEST_UPLOAD_TOKEN')
 	}
 }
+
 publishing {
 	repositories {
-		//gitLab.upload(owner, "")
-		gitLab.upload(owner, "$existingId")
-		gitLab.upload(owner, "specialToken") {
+		maven gitLab.upload("$existingId")
+		maven gitLab.upload("specialToken") {
 			tokenSelector = "token0"
 		}
-		gitLab.upload(owner, "specialToken1") {
+		maven gitLab.upload("specialToken1") {
 			tokenSelector = "token1"
 		}
-		gitLab.upload(owner, "specialTokenSelection") {
+		maven gitLab.upload("specialTokenSelection") {
 			tokenSelectors = ["jobToken", "token1"]
 		}
-		gitLab.upload(owner, "ignoredNoValue") {
+		maven gitLab.upload("ignoredNoValue") {
 			tokenSelector = "tokenIgnoredNoValue"
 		}
-		gitLab.upload(owner, "24974077") {
+		maven gitLab.upload("24974077") {
 			name = "GitLab"
 			tokenSelector = "testToken"
 		}

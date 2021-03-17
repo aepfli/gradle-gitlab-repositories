@@ -9,6 +9,10 @@
  */
 package at.schrottner.gradle.auths
 
+/**
+ * TODO:
+ * 	- rework tokens - this subclassing is ridiculous and should be reflected by a enum
+ */
 public abstract class Token {
 	String name
 	String value
