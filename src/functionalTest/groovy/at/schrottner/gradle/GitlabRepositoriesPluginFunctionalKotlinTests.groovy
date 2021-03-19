@@ -19,10 +19,10 @@ import org.junit.jupiter.api.io.TempDir
 
 class GitlabRepositoriesPluginFunctionalKotlinTests {
 	private pluginClasspath = getClass().classLoader.findResource("plugin-classpath.txt")
-			.readLines()
-			.collect { it.replace("\\\\", "\\\\\\\\") } // escape backslashes in Windows paths
-			.collect { "\"$it\"" }
-			.join(", ")
+	.readLines()
+	.collect { it.replace("\\\\", "\\\\\\\\") } // escape backslashes in Windows paths
+	.collect { "\"$it\"" }
+	.join(", ")
 
 	File projectDir
 	File settingsGradle
@@ -56,9 +56,9 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 		assertThat(result.output)
 				.contains("BUILD SUCCESSFUL")
 				.containsSubsequence(
-						"added Job-Token: jobToken",
-						"added Deploy-Token: token0",
-						"added Deploy-Token: token1"
+				"added Job-Token: jobToken",
+				"added Deploy-Token: token0",
+				"added Deploy-Token: token1"
 				)
 	}
 
@@ -79,9 +79,9 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 		assertThat(result.output)
 				.contains("BUILD SUCCESSFUL")
 				.containsSubsequence(
-						"added Job-Token: jobToken",
-						"added Deploy-Token: token0",
-						"added Deploy-Token: token1"
+				"added Job-Token: jobToken",
+				"added Deploy-Token: token0",
+				"added Deploy-Token: token1"
 				)
 	}
 
@@ -107,12 +107,12 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 		assertThat(result.output)
 				.contains("BUILD SUCCESSFUL")
 				.containsSubsequence(
-						"added Job-Token: jobToken",
-						"added Deploy-Token: token0",
-						"added Deploy-Token: token1",
-						"Settings evaluated",
-						"replaced Private-Token: token0",
-						"replaced Private-Token: token1"
+				"added Job-Token: jobToken",
+				"added Deploy-Token: token0",
+				"added Deploy-Token: token1",
+				"Settings evaluated",
+				"replaced Private-Token: token0",
+				"replaced Private-Token: token1"
 				)
 	}
 
