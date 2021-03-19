@@ -49,11 +49,6 @@ gitLab {
 	applyToProject = true
 
 	/**
-	 * After the repository with this name, the repositories will be added
-	 * */
-	afterRepository = 'MavenLocal'
-
-	/**
 	 * Token configuration also the order in which we try to apply them. 
 	 * The key is the name of the token, and the value will be used for application. 
 	 * Currently we do have 3 different token classes: 
@@ -108,7 +103,7 @@ apply plugin: 'at.schrottner.gitlab-repositories'
 
 ```kotlin
 plugins {
-    id("at.schrottner.gitlab-repositories") version "0.1.4"
+    id("at.schrottner.gitlab-repositories") version "<version>"
 }
 ```
 
@@ -118,7 +113,7 @@ plugins {
 buildscript {
     // ..
     dependencies {
-        classpath("at.schrottner.gradle.gitlab-plugin:gitlab-repositories:0.1.4")
+        classpath("at.schrottner.gradle.gitlab-plugin:gitlab-repositories:<version>")
     }
 }
 
@@ -130,17 +125,19 @@ apply(plugin = "at.schrottner.gitlab-repositories")
 The plugin offers you a nice helper method inspired by `gradle-jruby-plugin` to easily add repositories.
 
 ```groovy
-gitLab.project(projectId)
-gitLab.project(projectId) {
-	name = "custom name"
-	tokenSelektor = "" // a name of a configured token
-	tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
-}
-gitLab.group(groupId)
-gitLab.group(groupId) {
-	name = "custom name"
-	tokenSelektor = "" // a name of a configured token
-	tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
+repositories {
+	maven gitLab.project(projectId)
+	maven gitLab.project(projectId) {
+		name = "custom name"
+		tokenSelektor = "" // a name of a configured token
+		tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
+	}
+	maven gitLab.group(groupId)
+	maven gitLab.group(groupId) {
+		name = "custom name"
+		tokenSelektor = "" // a name of a configured token
+		tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
+	}
 }
 ```
 
@@ -156,6 +153,13 @@ publishing {
 			tokenSelektor = "" // a name of a configured token
 			tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
 		}
+
+		maven gitLab.upload(projectId)
+		maven gitLab.upload(projectId) {
+			name = "custom name"
+			tokenSelektor = "" // a name of a configured token
+			tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
+		}
 	}
 }
 ```
@@ -165,8 +169,12 @@ publishing {
 This will add a repository and will apply conditions for the first token matching, and not being empty.
 
 ```groovy
-gitLab.project(1)
-gitLab.group(1)
+// pluginManagment.repositories { // when in settings.gradle
+repositories {
+	maven gitLab.project(1)
+	maven gitLab.group(1)
+}
+
 ```
 
 ### Adding a repository with specific tokens
@@ -213,12 +221,12 @@ gitLab {
 }
 
 repositories {
-	gitLab.group("ID")
+	maven gitLab.group("ID")
 }
 
 publishing {
 	repositories {
-		gitLab.upload(owner, "ID")
+		maven gitLab.upload(owner, "ID")
 	}
 }
 ```
