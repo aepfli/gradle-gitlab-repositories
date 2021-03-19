@@ -2,191 +2,129 @@ package at.schrottner.gradle
 
 import at.schrottner.gradle.auths.JobToken
 import at.schrottner.gradle.auths.Token
-import at.schrottner.gradle.mavenConfigs.GroupMavenConfig
-import at.schrottner.gradle.mavenConfigs.ProjectMavenConfig
+import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.RepositoryHandler
-import org.gradle.api.artifacts.repositories.AuthenticationContainer
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
-import org.gradle.api.credentials.HttpHeaderCredentials
 import org.gradle.api.initialization.Settings
-import org.gradle.authentication.http.HttpHeaderAuthentication
+import org.gradle.api.model.ObjectFactory
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-public class GitlabRepositoriesExtension implements LogHandler {
+
+/**
+ * GitLabRepositoriesExtension is the main entry point to configure the plugin
+ *
+ * It provides additional methods to automatically add repositories based on GitLab Groups
+ * or Projects.
+ */
+@CompileStatic
+class GitlabRepositoriesExtension {
+
+	private static final Logger logger = LoggerFactory.getLogger(RepositoryHandler)
 	public static final String NAME = "gitLab"
 	private final RepositoryHandler repositories
-	private int afterPosition
+	private final ObjectFactory objects
+	private final RepositoryActionHandler handler
 
 	String baseUrl = "gitlab.com"
-	String afterRepository = 'MavenLocal'
 	boolean applyToProject = true
 	Map<String, Token> tokens = [:]
 
-	public static final def artifacts = [:]
+	public final List<Action<MavenArtifactRepository>> artifactActionStorage = []
 
-	GitlabRepositoriesExtension(Settings settings) {
-		this.logPrefix = "Settings"
-		this.logger = LoggerFactory.getLogger(GitlabRepositoriesExtension.class)
+	GitlabRepositoriesExtension(Settings settings, ObjectFactory objects) {
+		this.objects = objects
 		this.repositories = settings.pluginManagement.repositories
+		handler = new RepositoryActionHandler(this)
 		setup()
 	}
 
-	GitlabRepositoriesExtension(Project project) {
-		this.logPrefix = "Project ($project.name)"
-		this.logger = project.logger
+	GitlabRepositoriesExtension(Project project, ObjectFactory objects, GitlabRepositoriesExtension parent = null) {
+		this.objects = objects
 		this.repositories = project.repositories
-		migrateSettingsTokens(project)
-		setup()
-	}
-
-	private void migrateSettingsTokens(Project project) {
-		if (project.extensions.extraProperties.has('gitLabTokens')) {
-			def passedOnTokens = (project.extensions.extraProperties['gitLabTokens'] ?: [:]) as Map<String, Object>
-			passedOnTokens.each { key, value ->
-				token(Class.forName(value.getClass().name) as Class<? extends Token>) {
-					it.key = value['key']
-					it.value = value['value']
-				}
-			}
+		handler = new RepositoryActionHandler(this)
+		if (parent) {
+			this.baseUrl = parent.baseUrl
+		}
+		if (!migrateSettingsTokens(project)) {
+			setup()
 		}
 	}
 
+	private boolean migrateSettingsTokens(Project project) {
+		if (project.extensions.extraProperties.has('gitLabTokens')) {
+			def passedOnTokens = (project.extensions.extraProperties['gitLabTokens'] ?: [:]) as Map<String, Object>
+			passedOnTokens.each { key, value ->
+				def token = (Class.forName(value.getClass().name) as Class<? extends Token>).newInstance()
+				token.key = key
+				token.value = value['value']
+				logger.info("$Config.LOG_PREFIX readding Token from Parent $token.name: $token.key")
+				tokens.put(token.key, token)
+			}
+			return true
+		}
+		return false
+	}
+
 	void setup() {
-		logger.info("$logPrefix initializing")
+		logger.info("$Config.LOG_PREFIX initializing")
 		token(JobToken, {
 			it.key = 'jobToken'
 			it.value = System.getenv("CI_JOB_TOKEN")
 		})
-		afterPosition = repositories.indexOf(repositories.findByName(afterRepository))
 	}
 
 	void token(Class<? extends Token> tokenClass, Action<Token> action) {
 		def token = tokenClass.newInstance();
 		action.execute(token)
 
-		logger.info("$logPrefix ${tokens.containsKey(token.key) ? "replaced" : "added"} $token.name: $token.key")
+		logger.info("$Config.LOG_PREFIX ${tokens.containsKey(token.key) ? "replaced" : "added"} $token.name: $token.key")
 		tokens.put(token.key, token)
 	}
 
-	void setAfterRepository(String afterRepository) {
-		this.afterRepository = afterRepository
-		afterPosition = repositories.indexOf(repositories.findByName(afterRepository))
+	def upload(String id, Action<? super RepositoryConfiguration> configAction = null) {
+		RepositoryConfiguration repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.PROJECT)
+		mavenInternal(repositoryConfiguration, configAction)
 	}
 
-	MavenArtifactRepository upload(def delegate, String id, Action<MavenConfig> configAction = null) {
-		mavenInternal(new ProjectMavenConfig(id), configAction) { repo ->
-			delegate.maven(repo)
-		}
+	private RepositoryConfiguration generateRepositoryConfiguration(String id, GitLabEntityType entityType) {
+		RepositoryConfiguration repositoryConfiguration = objects.newInstance(RepositoryConfiguration.class, id, entityType)
+		repositoryConfiguration
 	}
 
 	/**
 	 * @deprecated use{@link #group(java.lang.String, org.gradle.api.Action)} or {@link #project(java.lang.String, org.gradle.api.Action)}
 	 */
 	@Deprecated
-	MavenArtifactRepository maven(String id, Action<MavenConfig> configAction = null) {
+	def maven(String id, Action<? super RepositoryConfiguration> configAction = null) {
 		group(id, configAction)
 	}
 
-	MavenArtifactRepository group(String id, Action<MavenConfig> configAction = null) {
-		mavenInternal(new GroupMavenConfig(id), configAction)
+	def group(String id, Action<? super RepositoryConfiguration> configAction = null) {
+		def repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.GROUP)
+		mavenInternal(repositoryConfiguration, configAction)
 	}
 
-	MavenArtifactRepository project(String id, Action<MavenConfig> configAction = null) {
-
-		mavenInternal(new ProjectMavenConfig(id), configAction)
+	def project(String id, Action<? super RepositoryConfiguration> configAction = null) {
+		def repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.PROJECT)
+		mavenInternal(repositoryConfiguration, configAction)
 	}
 
+	def mavenInternal(RepositoryConfiguration repositoryConfiguration,
+					  Action<? super RepositoryConfiguration> configAction = null) {
 
-	MavenArtifactRepository mavenInternal(MavenConfig mavenConfig,
-										  Action<MavenConfig> configAction = null,
-										  Closure<MavenArtifactRepository> action = null) {
-
-		if (!mavenConfig.id) {
-			logger.info("$logPrefix: No ID provided nothing will happen here :)")
-			return null
+		if (!repositoryConfiguration.id) {
+			logger.info("$Config.LOG_PREFIX: No ID provided - project will be added anyways, but will not be used")
 		}
 
-		configAction?.execute(mavenConfig)
+		configAction?.execute(repositoryConfiguration)
 
-		Map<String, Token> applicableTokens = getApplicableTokens(mavenConfig)
+		Action<MavenArtifactRepository> artifactRepo = handler.generate(repositoryConfiguration)
 
-		def artifactRepo = generateMavenArtifactRepositoryAction(
-				mavenConfig,
-				applicableTokens)
+		artifactActionStorage.add artifactRepo
 
-		if (artifactRepo)
-			if (action)
-				action(artifactRepo)
-			else
-				applyMaven(artifactRepo)
-	}
-
-	private MavenArtifactRepository applyMaven(Action<MavenArtifactRepository> artifactRepo) {
-		def repo = repositories.maven(artifactRepo)
-
-		repositories.remove(repo)
-
-		repositories.add(++afterPosition, repo)
-		repo
-	}
-
-	private Map<String, Token> getApplicableTokens(MavenConfig mavenConfig) {
-		Map<String, Token> applicableTokens = (mavenConfig.tokenSelectors ?: tokens.keySet()).collectEntries {
-			def token = tokens.get(it)
-			if (token)
-				[{ it }: token]
-		}
-		logger.debug("$logPrefix: Maven Repository with $mavenConfig.name will try to use following tokens ${applicableTokens.keySet()}")
-
-		applicableTokens
-	}
-
-	private Action<MavenArtifactRepository> generateMavenArtifactRepositoryAction(mavenConfig, Map<String, Token> tokens) {
-		Token token = tokens.values().find { token ->
-			token.value
-		}
-		if (token) {
-			logger.info("$logPrefix: Maven Repository $mavenConfig.name is using '${token.key}'")
-			def artifactRepo = new Action<MavenArtifactRepository>() {
-				@Override
-				void execute(MavenArtifactRepository mvn) {
-					mvn.url = mavenConfig.buildUrl(baseUrl)
-					mvn.name = mavenConfig.name
-
-					mvn.credentials(HttpHeaderCredentials) {
-						it.name = token.name
-						it.value = token.value
-					}
-					mvn.authentication(new Action<AuthenticationContainer>() {
-						@Override
-						void execute(AuthenticationContainer authentications) {
-							authentications.create('header', HttpHeaderAuthentication)
-						}
-					})
-				}
-			}
-
-			artifacts[mavenConfig] = artifactRepo
-			return artifactRepo
-
-		} else {
-			logger.error("$logPrefix Maven Repository $mavenConfig.name was not added, as no token could be applied!\n\t" +
-					"\n\t" +
-					"#################################################################################### \n\t" +
-					"#################################################################################### \n\t" +
-					"#################################################################################### \n\t" +
-					"Currently you have configured following tokens, but non seem to resolve to an value: \n\t" +
-					"\t- ${mavenConfig.tokenSelectors.join("\n\t\t- ")} \n\t" +
-					"\n\t" +
-					"				Please verify your configuration - Thank you! \n\t" +
-					"\n\t" +
-					"#################################################################################### \n\t" +
-					"#################################################################################### \n\t" +
-					"#################################################################################### \n\t" +
-					"")
-			return null
-		}
+		return artifactRepo
 	}
 }

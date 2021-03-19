@@ -7,11 +7,22 @@
  *
  * http://www.eclipse.org/legal/epl-v20.html
  */
-package at.schrottner.gradle.auths
+package at.schrottner.gradle
 
-class PrivateToken extends Token {
+enum GitLabEntityType {
+	GROUP("Group", "groups"),
+	PROJECT("Project", "projects")
 
-	PrivateToken() {
-		super('Private-Token')
+	String name
+	String endpoint
+
+	GitLabEntityType(String name, String endpoint) {
+		this.name = name
+		this.endpoint = endpoint
+	}
+
+	@Override
+	String toString() {
+		return name
 	}
 }

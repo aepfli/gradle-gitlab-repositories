@@ -7,11 +7,10 @@
  *
  * http://www.eclipse.org/legal/epl-v20.html
  */
-package at.schrottner.gradle.auths
+package at.schrottner.gradle
 
-class PrivateToken extends Token {
-
-	PrivateToken() {
-		super('Private-Token')
-	}
+class Config {
+	public static final String LOG_PREFIX = "GitLab Repositories ::"
+	public static final String GROUP = "Group"
+	public static final String PROJECT = "Project"
 }

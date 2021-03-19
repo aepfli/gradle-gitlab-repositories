@@ -1,0 +1,32 @@
+buildscript {
+	dependencies {
+		classpath files(pluginClasspath.split(','))
+	}
+}
+apply plugin: at.schrottner.gradle.GitlabRepositoriesPlugin
+
+gitLab {
+	token(DeployToken) {
+		it.key = 'tokenAdded'
+		it.value = ''
+	}
+	token(DeployToken) {
+		it.key = 'tokenAdded1'
+		it.value = 'project1'
+	}
+	token(DeployToken) {
+		it.key = 'token0'
+		it.value = 'test'
+	}
+}
+
+repositories {
+	realms.split(',').each { realm ->
+		maven gitLab."$realm"("tokentest") {
+			tokenSelector = "tokenAdded"
+		}
+		maven gitLab."$realm"("tokentest1") {
+			tokenSelector = "tokenAdded1"
+		}
+	}
+}
