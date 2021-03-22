@@ -24,7 +24,6 @@ class GitlabRepositoriesExtension {
 
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryHandler)
 	public static final String NAME = "gitLab"
-	private final RepositoryHandler repositories
 	private final ObjectFactory objects
 	private final RepositoryActionHandler handler
 
@@ -36,14 +35,12 @@ class GitlabRepositoriesExtension {
 
 	GitlabRepositoriesExtension(Settings settings, ObjectFactory objects) {
 		this.objects = objects
-		this.repositories = settings.pluginManagement.repositories
 		handler = new RepositoryActionHandler(this)
 		setup()
 	}
 
 	GitlabRepositoriesExtension(Project project, ObjectFactory objects, GitlabRepositoriesExtension parent = null) {
 		this.objects = objects
-		this.repositories = project.repositories
 		handler = new RepositoryActionHandler(this)
 		if (parent) {
 			this.baseUrl = parent.baseUrl
@@ -97,7 +94,6 @@ class GitlabRepositoriesExtension {
 	 * @return
 	 */
 	def upload(def delegate, String projectId, Action<? super RepositoryConfiguration> configAction = null) {
-		RepositoryConfiguration repositoryConfiguration = generateRepositoryConfiguration(projectId, GitLabEntityType.PROJECT)
 		def internal = upload(projectId, configAction)
 		if (projectId)
 			delegate?.maven(internal)
