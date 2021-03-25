@@ -8,6 +8,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.initialization.Settings
+import org.gradle.api.internal.artifacts.dsl.DefaultRepositoryHandler
 import org.gradle.api.model.ObjectFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -19,12 +20,10 @@ import org.slf4j.LoggerFactory
  * It provides additional methods to automatically add repositories based on GitLab Groups
  * or Projects.
  */
-@CompileStatic
 class GitlabRepositoriesExtension {
 
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryHandler)
 	public static final String NAME = "gitLab"
-	private final RepositoryHandler repositories
 	private final ObjectFactory objects
 	private final RepositoryActionHandler handler
 
@@ -36,14 +35,12 @@ class GitlabRepositoriesExtension {
 
 	GitlabRepositoriesExtension(Settings settings, ObjectFactory objects) {
 		this.objects = objects
-		this.repositories = settings.pluginManagement.repositories
 		handler = new RepositoryActionHandler(this)
 		setup()
 	}
 
 	GitlabRepositoriesExtension(Project project, ObjectFactory objects, GitlabRepositoriesExtension parent = null) {
 		this.objects = objects
-		this.repositories = project.repositories
 		handler = new RepositoryActionHandler(this)
 		if (parent) {
 			this.baseUrl = parent.baseUrl
@@ -84,13 +81,33 @@ class GitlabRepositoriesExtension {
 		tokens.put(token.key, token)
 	}
 
-	def upload(String id, Action<? super RepositoryConfiguration> configAction = null) {
-		RepositoryConfiguration repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.PROJECT)
+	/**
+	 * Special endpoint for uploading as GitLab only supports uploads for project, this is using the project endpoint.
+	 * it allows to be directly added to a DefaultRepositoryHandler, as the ID might be some env variable only
+	 *  	available during CI builds etc. and this might cause on wanted side-effects if it is not resolving to a
+	 *  	usable endpoint
+	 *
+	 *
+	 * @param delegate
+	 * @param id
+	 * @param configAction
+	 * @return
+	 */
+	def upload(def delegate, String projectId, Action<? super RepositoryConfiguration> configAction = null) {
+		def internal = upload(projectId, configAction)
+		if (projectId)
+			delegate?.maven(internal)
+		internal
+	}
+
+	def upload(String projectId, Action<? super RepositoryConfiguration> configAction = null) {
+		RepositoryConfiguration repositoryConfiguration = generateRepositoryConfiguration(projectId, GitLabEntityType.PROJECT)
 		mavenInternal(repositoryConfiguration, configAction)
 	}
 
+
 	private RepositoryConfiguration generateRepositoryConfiguration(String id, GitLabEntityType entityType) {
-		RepositoryConfiguration repositoryConfiguration = objects.newInstance(RepositoryConfiguration.class, id, entityType)
+		RepositoryConfiguration repositoryConfiguration = objects.newInstance(RepositoryConfiguration.class, id ?: "NOT_PROPERLY_SET", entityType)
 		repositoryConfiguration
 	}
 
