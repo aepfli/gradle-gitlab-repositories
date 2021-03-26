@@ -62,10 +62,10 @@ jacocoTestReport {
 	executionData.setFrom fileTree(buildDir).include("/jacoco/*.exec")
 }
 
-compileJava {
-	sourceCompatibility = '1.8'
-	targetCompatibility = '1.8'
-}
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
 
 gradlePlugin {
 	plugins {
