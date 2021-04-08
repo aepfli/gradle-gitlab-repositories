@@ -1,8 +1,6 @@
 package at.schrottner.gradle
 
-import at.schrottner.gradle.auths.DeployToken
-import at.schrottner.gradle.auths.JobToken
-import at.schrottner.gradle.auths.PrivateToken
+import at.schrottner.gradle.auths.GitLabTokenType
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -33,9 +31,9 @@ class GitlabRepositoriesPlugin implements Plugin<ExtensionAware> {
 	}
 
 	void addProps(ExtensionAware extensionAware) {
-		extensionAware.extensions.extraProperties.set('DeployToken', DeployToken.class)
-		extensionAware.extensions.extraProperties.set('PrivateToken', PrivateToken.class)
-		extensionAware.extensions.extraProperties.set('JobToken', JobToken.class)
+		extensionAware.extensions.extraProperties.set('DeployToken', GitLabTokenType.DEPLOY)
+		extensionAware.extensions.extraProperties.set('PrivateToken', GitLabTokenType.PRIVATE)
+		extensionAware.extensions.extraProperties.set('JobToken', GitLabTokenType.JOB)
 	}
 
 	void apply(Settings extensionAware) {

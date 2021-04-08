@@ -13,18 +13,12 @@ package at.schrottner.gradle.auths
  * TODO:
  * 	- rework tokens - this subclassing is ridiculous and should be reflected by a enum
  */
-public abstract class Token {
-	String name
+public class Token {
+	GitLabTokenType type
 	String value
 	String key
 
-	Token(String name, String value, String key) {
-		this.name = name
-		this.value = value
-		this.key = key
-	}
-
-	Token(String name) {
-		this.name = name
+	Token(GitLabTokenType type) {
+		this.type = type
 	}
 }

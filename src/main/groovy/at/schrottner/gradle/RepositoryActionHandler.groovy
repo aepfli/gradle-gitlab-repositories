@@ -1,5 +1,6 @@
 package at.schrottner.gradle
 
+import at.schrottner.gradle.auths.GitLabTokenType
 import at.schrottner.gradle.auths.Token
 import groovy.transform.CompileStatic
 import org.gradle.api.Action
@@ -32,6 +33,7 @@ class RepositoryActionHandler implements Action<MavenArtifactRepository> {
 		Set<String> tokenList = tokenInformation.tokenList
 		if (!token) {
 			handleInapplicableTokenCase(repositoryConfiguration, tokenList)
+			token = new Token(GitLabTokenType.NO_VALUE)
 		} else {
 			logger.info("${logPrefix(repositoryConfiguration)} is using '${token.key}' '${token.name}'")
 		}
