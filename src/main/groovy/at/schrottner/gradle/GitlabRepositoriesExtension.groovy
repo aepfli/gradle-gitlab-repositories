@@ -2,7 +2,6 @@ package at.schrottner.gradle
 
 import at.schrottner.gradle.auths.GitLabTokenType
 import at.schrottner.gradle.auths.Token
-import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.RepositoryHandler
