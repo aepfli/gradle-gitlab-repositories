@@ -29,7 +29,7 @@ class RepositoryActionHandler {
 		if (!token) {
 			handleInapplicableTokenCase(repositoryConfiguration, tokenList)
 		} else {
-			logger.info("${logPrefix(repositoryConfiguration)} is using '${token.key}' '${token.value}'")
+			logger.info("${logPrefix(repositoryConfiguration)} is using '${token.key}' '${token.name}'")
 		}
 		Action<MavenArtifactRepository> artifactRepo = generateArtifactRepositoryAction(repositoryConfiguration, token)
 		return artifactRepo
