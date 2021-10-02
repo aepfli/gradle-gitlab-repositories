@@ -25,10 +25,10 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 	private static def renamedId = "123"
 	private static def realms = ["group", "project"]
 	private pluginClasspath = getClass().classLoader.findResource("plugin-classpath.txt")
-			.readLines()
-			.collect { it.replace('\\\\', '\\\\\\\\') } // escape backslashes in Windows paths
-			.collect { "$it" }
-			.join(",")
+	.readLines()
+	.collect { it.replace('\\\\', '\\\\\\\\') } // escape backslashes in Windows paths
+	.collect { "$it" }
+	.join(",")
 
 	File projectDir
 	File settingsGradle
@@ -67,17 +67,17 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 			assertThat(result.output)
 					.contains("BUILD SUCCESSFUL")
 					.containsSubsequence(
-							"added Job-Token: jobToken",
-							"added Private-Token: tokenIgnoredNoValue",
-							"added Deploy-Token: token0",
-							"added Deploy-Token: token1"
+					"added Job-Token: jobToken",
+					"added Private-Token: tokenIgnoredNoValue",
+					"added Deploy-Token: token0",
+					"added Deploy-Token: token1"
 					)
 					.containsSubsequence("Maven Repository $repoPrefix-$existingId is using 'token0'",
-							"Maven Repository $it-renamed is using 'token0'",
-							"Maven Repository $repoPrefix-specialToken is using 'token0'",
-							"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
-							"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
-							"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!"
+					"Maven Repository $it-renamed is using 'token0'",
+					"Maven Repository $repoPrefix-specialToken is using 'token0'",
+					"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
+					"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
+					"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!"
 					)
 					.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using '")
 		}
@@ -98,17 +98,17 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 			assertThat(result.output)
 					.contains("BUILD SUCCESSFUL")
 					.containsSubsequence(
-							"added Job-Token: jobToken",
-							"added Private-Token: tokenIgnoredNoValue",
-							"added Private-Token: token0",
-							"added Private-Token: token1"
+					"added Job-Token: jobToken",
+					"added Private-Token: tokenIgnoredNoValue",
+					"added Private-Token: token0",
+					"added Private-Token: token1"
 					)
 					.containsSubsequence("Maven Repository $repoPrefix-$existingId is using 'token0'",
-							"Maven Repository $it-renamed is using 'token0'",
-							"Maven Repository $repoPrefix-specialToken is using 'token0'",
-							"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
-							"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
-							"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!"
+					"Maven Repository $it-renamed is using 'token0'",
+					"Maven Repository $repoPrefix-specialToken is using 'token0'",
+					"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
+					"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
+					"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!"
 					)
 					.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using '")
 		}
@@ -126,20 +126,20 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 		assertThat(result.output)
 				.contains("BUILD SUCCESSFUL")
 				.containsSubsequence(
-						"added Job-Token: jobToken",
-						"added Deploy-Token: token0",
-						"added Deploy-Token: token1",
-						"Settings evaluated",
-						"replaced Private-Token: token0",
-						"replaced Private-Token: token1"
+				"added Job-Token: jobToken",
+				"added Deploy-Token: token0",
+				"added Deploy-Token: token1",
+				"Settings evaluated",
+				"replaced Private-Token: token0",
+				"replaced Private-Token: token1"
 				)
 	}
 
 	@Test
 	@DisabledIfEnvironmentVariable(
-			named = 'TEST_UPLOAD_TOKEN',
-			matches = '^$',
-			disabledReason = 'Upload deactivated due to missing TEST_UPLOAD_TOKEN'
+	named = 'TEST_UPLOAD_TOKEN',
+	matches = '^$',
+	disabledReason = 'Upload deactivated due to missing TEST_UPLOAD_TOKEN'
 	)
 	void "uploadTest"() {
 		def testFile = TestFileUtils.getTestResource(new File(projectDir, 'test.xml'), 'test.xml')
@@ -152,20 +152,20 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 		assertThat(uploadResult.output)
 				.contains("BUILD SUCCESSFUL")
 				.containsSubsequence(
-						"added Job-Token: jobToken",
-						//						"added Private-Token: tokenIgnoredNoValue",
-						//						"added Deploy-Token: token0",
-						//						"added Deploy-Token: token1",
-						//						"Settings evaluated",
-						"added Private-Token: testToken"
+				"added Job-Token: jobToken",
+				//						"added Private-Token: tokenIgnoredNoValue",
+				//						"added Deploy-Token: token0",
+				//						"added Deploy-Token: token1",
+				//						"Settings evaluated",
+				"added Private-Token: testToken"
 				)
 				.containsSubsequence(
-						//						"Maven Repository $repoPrefix-$existingId is using 'token0'",
-						//						"Maven Repository $repoPrefix-specialToken is using 'token0'",
-						//						"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
-						//						"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
-						//						"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!",
-						"Maven Repository GitLab is using 'testToken'",
+				//						"Maven Repository $repoPrefix-$existingId is using 'token0'",
+				//						"Maven Repository $repoPrefix-specialToken is using 'token0'",
+				//						"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
+				//						"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
+				//						"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!",
+				"Maven Repository GitLab is using 'testToken'",
 				)
 				.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using '")
 				.contains("Publishing to repository 'GitLab'")
