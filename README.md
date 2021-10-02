@@ -120,9 +120,13 @@ buildscript {
 apply(plugin = "at.schrottner.gitlab-repositories")
 ```
 
-## Adding repositories
+## Repository handling
+
+### Adding repositories for dependencies
 
 The plugin offers you a nice helper method inspired by `gradle-jruby-plugin` to easily add repositories.
+
+#### Groovy DSL
 
 ```groovy
 repositories {
@@ -141,30 +145,80 @@ repositories {
 }
 ```
 
-For adding a repository to the maven-publish repositories please use following method. The `owner` needs to be provided
-and is a reference to the `repositories`. Be aware that this has to be a groupId
+#### Kotlin DSL
 
-```groovy
-publishing {
-	repositories {
-		gitLab.upload(owner, projectId)
-		gitLab.upload(owner, projectId) {
-			name = "custom name"
-			tokenSelektor = "" // a name of a configured token
-			tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
-		}
-
-		maven gitLab.upload(projectId)
-		maven gitLab.upload(projectId) {
-			name = "custom name"
-			tokenSelektor = "" // a name of a configured token
-			tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
-		}
-	}
+```kotlin
+repositories {
+    val gitLab = the<GitlabRepositoriesExtension>()
+    maven(gitLab.project(projectId))
+    maven(gitLab.project(projectId) {
+        name.set("custom name")
+        tokenSelektor.set("") // a name of a configured token
+        tokenSelectors.addAll(/*...*/) // a list of configured tokens, which will be checked based on their order in this set
+    })
+    maven(gitLab.group(groupId))
+    maven(gitLab.group(groupId) {
+        name.set("custom name")
+        tokenSelektor.set("") // a name of a configured token
+        tokenSelectors.addAll(/*...*/) // a list of configured tokens, which will be checked based on their order in this set
+    })
 }
 ```
 
-### Adding a repository
+### Adding repositories for publishing
+
+Be aware that this has to be a projectId - you are not able to upload to groups!
+
+#### Groovy DSL
+
+For adding a repository to the maven-publish repositories please use following methods.
+
+- with an `Owner` and without the need to manually passing the return value to the `maven`-configuration. The `owner`
+  represents a reference/delegate to the repositories object, hence that we will apply the configuration automatically.
+
+    ```groovy
+    publishing {
+        repositories {
+            gitLab.upload(owner, projectId)
+            gitLab.upload(owner, projectId) {
+                name = "custom name"
+                tokenSelektor = "" // a name of a configured token
+                tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
+            }
+        }
+    }
+    ```
+
+- without an `Owner` and passing the value to the `maven`-configuration
+
+    ```groovy
+    publishing {
+        repositories {
+            maven gitLab.upload(projectId)
+            maven gitLab.upload(projectId) {
+                name = "custom name"
+                tokenSelektor = "" // a name of a configured token
+                tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
+            }
+        }
+    }
+    ```
+
+#### Kotlin DSL
+
+```kotlin
+publishing {
+    repositories {
+        val gitLab = the<GitlabRepositoriesExtension>()
+        gitLab.upload(this, projectId) {
+            name.set("GitLab")
+            tokenSelector.set("testToken")
+        }
+    }
+}
+```
+
+### Adding a repository with defaults
 
 This will add a repository and will apply conditions for the first token matching, and not being empty.
 
