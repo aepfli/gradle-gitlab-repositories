@@ -9,14 +9,13 @@
  */
 package at.schrottner.gradle
 
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
-
 import static org.assertj.core.api.Assertions.assertThat
 
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
 import org.junit.jupiter.api.io.TempDir
 
 class GitlabRepositoriesPluginFunctionalKotlinTests {
@@ -154,18 +153,18 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 				.contains("BUILD SUCCESSFUL")
 				.containsSubsequence(
 						"added Job-Token: jobToken",
-//						"added Private-Token: tokenIgnoredNoValue",
-//						"added Deploy-Token: token0",
-//						"added Deploy-Token: token1",
-//						"Settings evaluated",
+						//						"added Private-Token: tokenIgnoredNoValue",
+						//						"added Deploy-Token: token0",
+						//						"added Deploy-Token: token1",
+						//						"Settings evaluated",
 						"added Private-Token: testToken"
 				)
 				.containsSubsequence(
-//						"Maven Repository $repoPrefix-$existingId is using 'token0'",
-//						"Maven Repository $repoPrefix-specialToken is using 'token0'",
-//						"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
-//						"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
-//						"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!",
+						//						"Maven Repository $repoPrefix-$existingId is using 'token0'",
+						//						"Maven Repository $repoPrefix-specialToken is using 'token0'",
+						//						"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
+						//						"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
+						//						"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!",
 						"Maven Repository GitLab is using 'testToken'",
 				)
 				.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using '")
