@@ -8,11 +8,9 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.initialization.Settings
-import org.gradle.api.internal.artifacts.dsl.DefaultRepositoryHandler
 import org.gradle.api.model.ObjectFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
 
 /**
  * GitLabRepositoriesExtension is the main entry point to configure the plugin
@@ -20,12 +18,12 @@ import org.slf4j.LoggerFactory
  * It provides additional methods to automatically add repositories based on GitLab Groups
  * or Projects.
  */
+@CompileStatic
 class GitlabRepositoriesExtension {
 
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryHandler)
 	public static final String NAME = "gitLab"
 	private final ObjectFactory objects
-	private final RepositoryActionHandler handler
 
 	String baseUrl = "gitlab.com"
 	boolean applyToProject = true
@@ -35,13 +33,11 @@ class GitlabRepositoriesExtension {
 
 	GitlabRepositoriesExtension(Settings settings, ObjectFactory objects) {
 		this.objects = objects
-		handler = new RepositoryActionHandler(this)
 		setup()
 	}
 
 	GitlabRepositoriesExtension(Project project, ObjectFactory objects, GitlabRepositoriesExtension parent = null) {
 		this.objects = objects
-		handler = new RepositoryActionHandler(this)
 		if (parent) {
 			this.baseUrl = parent.baseUrl
 		}
@@ -87,20 +83,11 @@ class GitlabRepositoriesExtension {
 	 *  	available during CI builds etc. and this might cause on wanted side-effects if it is not resolving to a
 	 *  	usable endpoint
 	 *
-	 *
-	 * @param delegate
 	 * @param id
 	 * @param configAction
 	 * @return
 	 */
-	def upload(def delegate, String projectId, Action<? super RepositoryConfiguration> configAction = null) {
-		def internal = upload(projectId, configAction)
-		if (projectId)
-			delegate?.maven(internal)
-		internal
-	}
-
-	def upload(String projectId, Action<? super RepositoryConfiguration> configAction = null) {
+	Action<MavenArtifactRepository> upload(String projectId, Action<? super RepositoryConfiguration> configAction = null) {
 		RepositoryConfiguration repositoryConfiguration = generateRepositoryConfiguration(projectId, GitLabEntityType.PROJECT)
 		mavenInternal(repositoryConfiguration, configAction)
 	}
@@ -115,21 +102,21 @@ class GitlabRepositoriesExtension {
 	 * @deprecated use{@link #group(java.lang.String, org.gradle.api.Action)} or {@link #project(java.lang.String, org.gradle.api.Action)}
 	 */
 	@Deprecated
-	def maven(String id, Action<? super RepositoryConfiguration> configAction = null) {
+	Action<MavenArtifactRepository> maven(String id, Action<? super RepositoryConfiguration> configAction = null) {
 		group(id, configAction)
 	}
 
-	def group(String id, Action<? super RepositoryConfiguration> configAction = null) {
-		def repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.GROUP)
+	Action<MavenArtifactRepository> group(String id, Action<? super RepositoryConfiguration> configAction = null) {
+		RepositoryConfiguration repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.GROUP)
 		mavenInternal(repositoryConfiguration, configAction)
 	}
 
-	def project(String id, Action<? super RepositoryConfiguration> configAction = null) {
-		def repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.PROJECT)
+	Action<MavenArtifactRepository> project(String id, Action<? super RepositoryConfiguration> configAction = null) {
+		RepositoryConfiguration repositoryConfiguration = generateRepositoryConfiguration(id, GitLabEntityType.PROJECT)
 		mavenInternal(repositoryConfiguration, configAction)
 	}
 
-	def mavenInternal(RepositoryConfiguration repositoryConfiguration,
+	Action<MavenArtifactRepository> mavenInternal(RepositoryConfiguration repositoryConfiguration,
 					  Action<? super RepositoryConfiguration> configAction = null) {
 
 		if (!repositoryConfiguration.id) {
@@ -138,7 +125,7 @@ class GitlabRepositoriesExtension {
 
 		configAction?.execute(repositoryConfiguration)
 
-		Action<MavenArtifactRepository> artifactRepo = handler.generate(repositoryConfiguration)
+		Action<MavenArtifactRepository> artifactRepo = new RepositoryActionHandler(this, repositoryConfiguration)
 
 		artifactActionStorage.add artifactRepo
 

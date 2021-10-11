@@ -42,3 +42,11 @@ repositories {
 		}
 	}
 }
+
+configurations {
+	testing
+}
+
+dependencies {
+	testing "at.schrottner.test.gitlab-repositories:test-file:test-SNAPSHOT@xml"
+}

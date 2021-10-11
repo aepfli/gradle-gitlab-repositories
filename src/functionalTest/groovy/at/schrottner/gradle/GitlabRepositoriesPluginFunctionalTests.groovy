@@ -16,6 +16,7 @@ import org.gradle.internal.impldep.org.apache.commons.io.FileUtils
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.io.TempDir
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+@Disabled
 class GitlabRepositoriesPluginFunctionalTests {
 
 	private static final Logger logger = LoggerFactory.getLogger(GitlabRepositoriesPluginFunctionalTests.class)
