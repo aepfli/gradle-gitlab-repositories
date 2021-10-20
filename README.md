@@ -40,14 +40,9 @@ improvements.
 
 ## Configuration
 
+### Groovy DSL
 ```groovy
 gitLab {
-	/**
-	 * only relevant for the usage within settings.gradle 
-	 * if the gitLab repositories should be also automatically applied to the project
-	 * */
-	applyToProject = true
-
 	/**
 	 * Token configuration also the order in which we try to apply them. 
 	 * The key is the name of the token, and the value will be used for application. 
@@ -65,6 +60,30 @@ gitLab {
 		it.value = System.getenv("GITLAB_DEPLOY_TOKEN")
 	}
 }
+```
+
+### Kotlin DSL
+
+```kotlin
+configure<GitlabRepositoriesExtension> {
+    /**
+     * Token configuration also the order in which we try to apply them.
+     * The key is the name of the token, and the value will be used for application.
+     * Currently we do have 3 different token classes:
+     * - PrivateToken "private"
+     * - DeployToken "deploy"
+     * - JobToken (will be always added by default, based on CI_JOB_TOKEN)
+     * */
+    token("private", {
+        key = "private"
+        value = ""
+    })
+    token("deploy", {
+        key = "tokenAdded"
+        value = System.getenv("GITLAB_DEPLOY_TOKEN")
+    })
+}
+
 ```
 
 ## Applying the plugin

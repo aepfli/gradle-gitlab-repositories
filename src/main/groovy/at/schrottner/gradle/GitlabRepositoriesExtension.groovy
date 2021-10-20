@@ -2,6 +2,7 @@ package at.schrottner.gradle
 
 import at.schrottner.gradle.auths.GitLabTokenType
 import at.schrottner.gradle.auths.Token
+import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.artifacts.dsl.RepositoryHandler
@@ -47,7 +48,7 @@ class GitlabRepositoriesExtension {
 
 	private boolean migrateSettingsTokens(Project project) {
 		if (project.extensions.extraProperties.has('gitLabTokens')) {
-			def passedOnTokens = (project.extensions.extraProperties['gitLabTokens'] ?: [:]) as Map<String, Object>
+			def passedOnTokens = (project.extensions.extraProperties['gitLabTokens'] ?: [:]) as Map<String, Token>
 			passedOnTokens.each { key, value ->
 				def token = value
 				logger.info("$Config.LOG_PREFIX readding Token from Parent $token.type: $token.key")

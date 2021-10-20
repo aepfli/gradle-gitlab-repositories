@@ -1,36 +1,37 @@
 import at.schrottner.gradle.auths.*
 import at.schrottner.gradle.*
-
-buildscript {
-    val pluginClasspath: String by settings
-    dependencies {
-        classpath(files(pluginClasspath.split(',')))
-    }
-}
-
-apply(plugin = "at.schrottner.gitlab-repositories")
+import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 
 configure<GitlabRepositoriesExtension> {
     token("private", {
         key = "tokenIgnoredNoValue"
         value = ""
     })
-    token("deploy", {
+    token("private", {
         key = "token0"
         value = "test"
     })
-    token("deploy", {
+    token("private", {
         key = "token1"
         value = "test"
     })
+    token("deploy", {
+        key = "tokenAdded"
+        value = "test"
+    })
+    token("private", {
+        key = "downloadToken"
+        value = System.getenv("TEST_UPLOAD_TOKEN")
+    })
 }
 
-pluginManagement.repositories {
-    val realms: String by settings
-    val existingId: String by settings
-    val renamedId: String by settings
+repositories {
+    val realms: String by project
+    val existingId: String by project
+    val renamedId: String by project
     val gitLab = the<GitlabRepositoriesExtension>()
 
+    maven(gitLab.project("24974077") { tokenSelector.set("downloadToken") })
     maven(gitLab.group("$existingId"))
     maven(gitLab.project("$existingId"))
     maven(gitLab.group("$renamedId") { name.set("group-renamed") })
@@ -43,5 +44,10 @@ pluginManagement.repositories {
     maven(gitLab.project("specialTokenSelection") { tokenSelectors.addAll("jobToken", "token1") })
     maven(gitLab.group("ignoredNoValue") { tokenSelector.set("tokenIgnoredNoValue") })
     maven(gitLab.project("ignoredNoValue") { tokenSelector.set("tokenIgnoredNoValue") })
+}
 
+val testing by configurations.creating
+
+dependencies {
+    testing("at.schrottner.test.gitlab-repositories:test-file:test-SNAPSHOT@xml")
 }
