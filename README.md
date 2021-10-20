@@ -171,38 +171,20 @@ Be aware that this has to be a projectId - you are not able to upload to groups!
 
 #### Groovy DSL
 
-For adding a repository to the maven-publish repositories please use following methods.
+For adding a repository to the maven-publish repositories please use following method.
 
-- with an `Owner` and without the need to manually passing the return value to the `maven`-configuration. The `owner`
-  represents a reference/delegate to the repositories object, hence that we will apply the configuration automatically.
-
-    ```groovy
-    publishing {
-        repositories {
-            gitLab.upload(owner, projectId)
-            gitLab.upload(owner, projectId) {
-                name = "custom name"
-                tokenSelektor = "" // a name of a configured token
-                tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
-            }
+```groovy
+publishing {
+    repositories {
+        maven gitLab.upload(projectId)
+        maven gitLab.upload(projectId) {
+            name = "custom name"
+            tokenSelektor = "" // a name of a configured token
+            tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
         }
     }
-    ```
-
-- without an `Owner` and passing the value to the `maven`-configuration
-
-    ```groovy
-    publishing {
-        repositories {
-            maven gitLab.upload(projectId)
-            maven gitLab.upload(projectId) {
-                name = "custom name"
-                tokenSelektor = "" // a name of a configured token
-                tokenSelectors = [] // a list of configured tokens, which will be checked based on their order in this set
-            }
-        }
-    }
-    ```
+}
+```
 
 #### Kotlin DSL
 
@@ -210,10 +192,10 @@ For adding a repository to the maven-publish repositories please use following m
 publishing {
     repositories {
         val gitLab = the<GitlabRepositoriesExtension>()
-        gitLab.upload(this, projectId) {
+        maven(gitLab.upload(projectId) {
             name.set("GitLab")
             tokenSelector.set("testToken")
-        }
+        })
     }
 }
 ```
@@ -280,7 +262,7 @@ repositories {
 
 publishing {
 	repositories {
-		maven gitLab.upload(owner, "ID")
+		maven gitLab.upload("ID")
 	}
 }
 ```

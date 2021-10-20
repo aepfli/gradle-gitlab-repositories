@@ -1,6 +1,7 @@
 package at.schrottner.gradle
 
 import at.schrottner.gradle.auths.Token
+import groovy.transform.CompileStatic
 import org.gradle.api.Action
 import org.gradle.api.artifacts.repositories.AuthenticationContainer
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
@@ -9,33 +10,49 @@ import org.gradle.authentication.http.HttpHeaderAuthentication
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class RepositoryActionHandler {
+@CompileStatic
+class RepositoryActionHandler implements Action<MavenArtifactRepository> {
 
 	public static final String REPOSITORY_PREFIX = "GitLab"
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryActionHandler)
 	private String baseUrl
 	private Map<String, Token> tokens
+	private RepositoryConfiguration repositoryConfiguration
 
-	RepositoryActionHandler(GitlabRepositoriesExtension extension) {
+	RepositoryActionHandler(GitlabRepositoriesExtension extension, RepositoryConfiguration repositoryConfiguration) {
 		this.baseUrl = extension.baseUrl
 		this.tokens = extension.tokens
+		this.repositoryConfiguration = repositoryConfiguration
 	}
 
-	Action<MavenArtifactRepository> generate(RepositoryConfiguration repositoryConfiguration) {
-		Token token
-		Set<String> tokenList
-		(token, tokenList) = computeTokenInformation(repositoryConfiguration)
-
+	@Override
+	void execute(MavenArtifactRepository mavenArtifactRepository) {
+		TokenInformation tokenInformation = computeTokenInformation(repositoryConfiguration)
+		Token token = tokenInformation.token
+		Set<String> tokenList = tokenInformation.tokenList
 		if (!token) {
 			handleInapplicableTokenCase(repositoryConfiguration, tokenList)
 		} else {
 			logger.info("${logPrefix(repositoryConfiguration)} is using '${token.key}' '${token.name}'")
 		}
-		Action<MavenArtifactRepository> artifactRepo = generateArtifactRepositoryAction(repositoryConfiguration, token)
-		return artifactRepo
+
+		mavenArtifactRepository.url = buildUrl(repositoryConfiguration)
+		mavenArtifactRepository.name = buildName(repositoryConfiguration)
+
+		mavenArtifactRepository.credentials(HttpHeaderCredentials) {
+			it.name = token?.name
+			it.value = token?.value
+		}
+		mavenArtifactRepository.authentication(new Action<AuthenticationContainer>() {
+			@Override
+			@Override
+			void execute(AuthenticationContainer authentications) {
+				authentications.create('header', HttpHeaderAuthentication)
+			}
+		})
 	}
 
-	private List computeTokenInformation(RepositoryConfiguration repositoryConfiguration) {
+	private TokenInformation computeTokenInformation(RepositoryConfiguration repositoryConfiguration) {
 		Token token
 		Set<String> tokenList
 		if (repositoryConfiguration.tokenSelector.getOrNull()) {
@@ -44,7 +61,9 @@ class RepositoryActionHandler {
 
 			def t = tokens.get(repositoryConfiguration.tokenSelector.get())
 			token = t?.value ? t : null
-			tokenList = [repositoryConfiguration.tokenSelector.get()]
+			def str = repositoryConfiguration.tokenSelector.get()
+			tokenList = new HashSet<>()
+			tokenList.add(str)
 		} else if (repositoryConfiguration.tokenSelectors.getOrNull()) {
 			token = repositoryConfiguration.tokenSelectors.get().findResult {
 				def t = tokens.get(it)
@@ -57,36 +76,15 @@ class RepositoryActionHandler {
 			}
 			tokenList = tokens.keySet()
 		}
-		[token, tokenList]
+		return new TokenInformation(token, tokenList)
 	}
 
 	private String logPrefix(RepositoryConfiguration repositoryConfiguration) {
 		"$Config.LOG_PREFIX Maven Repository ${buildName(repositoryConfiguration)}"
 	}
 
-	private Action<MavenArtifactRepository> generateArtifactRepositoryAction(RepositoryConfiguration repositoryConfiguration, Token token) {
-		new Action<MavenArtifactRepository>() {
-			@Override
-			void execute(MavenArtifactRepository mvn) {
-				mvn.url = buildUrl(repositoryConfiguration)
-				mvn.name = buildName(repositoryConfiguration)
-
-				mvn.credentials(HttpHeaderCredentials) {
-					it.name = token?.name
-					it.value = token?.value
-				}
-				mvn.authentication(new Action<AuthenticationContainer>() {
-					@Override
-					void execute(AuthenticationContainer authentications) {
-						authentications.create('header', HttpHeaderAuthentication)
-					}
-				})
-			}
-		}
-	}
-
 	private String buildName(RepositoryConfiguration repositoryConfiguration) {
-		return repositoryConfiguration.name.getOrElse("$REPOSITORY_PREFIX-${repositoryConfiguration.entityType}-${repositoryConfiguration.id}")
+		return repositoryConfiguration.name.getOrElse("$REPOSITORY_PREFIX-${repositoryConfiguration.entityType}-${repositoryConfiguration.id}".toString())
 	}
 
 	private String buildUrl(RepositoryConfiguration repositoryConfiguration) {
@@ -115,5 +113,16 @@ class RepositoryActionHandler {
 				"#################################################################################### \n\t" +
 				"#################################################################################### \n\t" +
 				"")
+	}
+
+
+	private class TokenInformation {
+		Token token
+		Set<String> tokenList
+
+		TokenInformation(Token token, Set<String> tokenList) {
+			this.token = token
+			this.tokenList = tokenList
+		}
 	}
 }

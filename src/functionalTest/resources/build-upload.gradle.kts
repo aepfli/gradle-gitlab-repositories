@@ -23,15 +23,15 @@ publishing {
     repositories {
         val existingId: String by project
         val gitLab = the<GitlabRepositoriesExtension>()
-//        maven(gitLab.upload("$existingId"))
-//        maven(gitLab.upload("specialToken") { tokenSelector.set("token0") })
-//        maven(gitLab.upload("specialToken1") { tokenSelector.set("token1") })
-//        maven(gitLab.upload("specialTokenSelection") { tokenSelectors.addAll("jobToken", "token1") })
-//        maven(gitLab.upload("ignoredNoValue") { tokenSelector.set("tokenIgnoredNoValue") })
-        gitLab.upload(this, "24974077") {
+        maven(gitLab.upload("$existingId"))
+        maven(gitLab.upload("specialToken") { tokenSelector.set("token0") })
+        maven(gitLab.upload("specialToken1") { tokenSelector.set("token1") })
+        maven(gitLab.upload("specialTokenSelection") { tokenSelectors.addAll("jobToken", "token1") })
+        maven(gitLab.upload("ignoredNoValue") { tokenSelector.set("tokenIgnoredNoValue") })
+        maven(gitLab.upload("24974077") {
             name.set("GitLab")
             tokenSelector.set("testToken")
-        }
+        })
     }
 
     publications {

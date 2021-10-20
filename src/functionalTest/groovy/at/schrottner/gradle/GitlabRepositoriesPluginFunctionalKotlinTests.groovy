@@ -143,8 +143,7 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 	)
 	void "uploadTest"() {
 		def testFile = TestFileUtils.getTestResource(new File(projectDir, 'test.xml'), 'test.xml')
-		// TODO: INSPECT why this is throwing a strange error when applied. some asserts are deactivated due to this.
-		//settingsGradle = TestFileUtils.getTestResource(new File(projectDir, SETTINGS_GRADLE), SETTINGS_GRADLE)
+		settingsGradle = TestFileUtils.getTestResource(new File(projectDir, SETTINGS_GRADLE), SETTINGS_GRADLE)
 		buildGradle = TestFileUtils.getTestResource(new File(projectDir, BUILD_GRADLE), 'build-upload.gradle.kts')
 
 		def uploadResult = runTest("publishTestPublicationToGitLabRepository", "-i", "-s")
@@ -153,18 +152,18 @@ class GitlabRepositoriesPluginFunctionalKotlinTests {
 				.contains("BUILD SUCCESSFUL")
 				.containsSubsequence(
 				"added Job-Token: jobToken",
-				//						"added Private-Token: tokenIgnoredNoValue",
-				//						"added Deploy-Token: token0",
-				//						"added Deploy-Token: token1",
-				//						"Settings evaluated",
+				"added Private-Token: tokenIgnoredNoValue",
+				"added Deploy-Token: token0",
+				"added Deploy-Token: token1",
+				"Settings evaluated",
 				"added Private-Token: testToken"
 				)
 				.containsSubsequence(
-				//						"Maven Repository $repoPrefix-$existingId is using 'token0'",
-				//						"Maven Repository $repoPrefix-specialToken is using 'token0'",
-				//						"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
-				//						"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
-				//						"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!",
+				"Maven Repository $repoPrefix-$existingId is using 'token0'",
+				"Maven Repository $repoPrefix-specialToken is using 'token0'",
+				"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
+				"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
+				"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!",
 				"Maven Repository GitLab is using 'testToken'",
 				)
 				.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using '")
