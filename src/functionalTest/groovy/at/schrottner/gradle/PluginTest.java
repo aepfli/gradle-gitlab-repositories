@@ -19,7 +19,6 @@ import static org.apiguardian.api.API.Status.STABLE;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @API(status = STABLE, since = "5.0")
-@DisplayName("Plugin Test")
 @ParameterizedTest(name = "{index} Running test for *.{0}")
 @ArgumentsSource(PluginTestParams.class)
 public @interface PluginTest {

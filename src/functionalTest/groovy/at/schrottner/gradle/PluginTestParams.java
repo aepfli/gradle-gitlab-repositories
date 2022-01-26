@@ -10,8 +10,8 @@ public class PluginTestParams implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
         return Stream.of(
-                Arguments.of("gradle"),
-                Arguments.of("gradle.kts")
+                Arguments.of("groovy"),
+                Arguments.of("kotlin")
         );
     }
 }

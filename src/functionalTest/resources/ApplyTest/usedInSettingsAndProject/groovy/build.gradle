@@ -1,0 +1,52 @@
+buildscript {
+	dependencies {
+		classpath files(pluginClasspath.split(','))
+	}
+}
+apply plugin: at.schrottner.gradle.GitlabRepositoriesPlugin
+
+gitLab {
+	token(PrivateToken) {
+		it.key = 'tokenIgnoredNoValue'
+		it.value = ''
+	}
+	token(PrivateToken) {
+		it.key = 'token0'
+		it.value = 'test'
+	}
+	token(PrivateToken) {
+		it.key = 'token1'
+		it.value = 'test'
+	}
+	token(DeployToken) {
+		it.key = 'tokenAdded'
+		it.value = 'test'
+	}
+}
+repositories {
+	realms.split(',').each { realm ->
+
+		maven gitLab."$realm"("$existingId")
+		maven gitLab."$realm"("$renamedId") { name = "$realm-renamed" }
+		maven gitLab."$realm"("specialToken") {
+			tokenSelector = "token0"
+		}
+		maven gitLab."$realm"("specialToken1") {
+			tokenSelector = "token1"
+		}
+		maven gitLab."$realm"("specialTokenSelection") {
+			tokenSelectors = ["jobToken", "token1"]
+		}
+		maven gitLab."$realm"("ignoredNoValue") {
+			tokenSelector = "tokenIgnoredNoValue"
+		}
+	}
+}
+
+configurations {
+	testing
+}
+
+dependencies {
+	testing "at.schrottner.test.gitlab-repositories:test-file:test-SNAPSHOT@xml"
+}
