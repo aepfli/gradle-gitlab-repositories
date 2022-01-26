@@ -1,6 +1,6 @@
 package at.schrottner.gradle
 
-import at.schrottner.gradle.auths.JobToken
+import at.schrottner.gradle.auths.GitLabTokenType
 import at.schrottner.gradle.auths.Token
 import groovy.transform.CompileStatic
 import org.gradle.api.Action
@@ -48,12 +48,10 @@ class GitlabRepositoriesExtension {
 
 	private boolean migrateSettingsTokens(Project project) {
 		if (project.extensions.extraProperties.has('gitLabTokens')) {
-			def passedOnTokens = (project.extensions.extraProperties['gitLabTokens'] ?: [:]) as Map<String, Object>
+			def passedOnTokens = (project.extensions.extraProperties['gitLabTokens'] ?: [:]) as Map<String, Token>
 			passedOnTokens.each { key, value ->
-				def token = (Class.forName(value.getClass().name) as Class<? extends Token>).newInstance()
-				token.key = key
-				token.value = value['value']
-				logger.info("$Config.LOG_PREFIX readding Token from Parent $token.name: $token.key")
+				def token = value
+				logger.info("$Config.LOG_PREFIX readding Token from Parent $token.type: $token.key")
 				tokens.put(token.key, token)
 			}
 			return true
@@ -63,17 +61,24 @@ class GitlabRepositoriesExtension {
 
 	void setup() {
 		logger.info("$Config.LOG_PREFIX initializing")
-		token(JobToken, {
+		token(GitLabTokenType.JOB, {
 			it.key = 'jobToken'
 			it.value = System.getenv("CI_JOB_TOKEN")
 		})
 	}
 
-	void token(Class<? extends Token> tokenClass, Action<Token> action) {
-		def token = tokenClass.newInstance();
+	void token(String tokenType, Action<Token> action) {
+		token(GitLabTokenType.valueOf(tokenType.toUpperCase()), action)
+	}
+
+	void token(GitLabTokenType tokenType, Action<Token> action) {
+		if (!tokenType) {
+			throw new IllegalArgumentException('no token')
+		}
+		def token = new Token(tokenType)
 		action.execute(token)
 
-		logger.info("$Config.LOG_PREFIX ${tokens.containsKey(token.key) ? "replaced" : "added"} $token.name: $token.key")
+		logger.info("$Config.LOG_PREFIX ${tokens.containsKey(token.key) ? "replaced" : "added"} $token.type: $token.key")
 		tokens.put(token.key, token)
 	}
 

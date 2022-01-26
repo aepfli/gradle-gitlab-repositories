@@ -13,7 +13,7 @@ plugins {
 apply(plugin = "at.schrottner.gitlab-repositories")
 
 configure<GitlabRepositoriesExtension> {
-    token(PrivateToken::class.javaObjectType, {
+    token("private", {
         key = "testToken"
         value = System.getenv("TEST_UPLOAD_TOKEN")
     })
@@ -38,7 +38,7 @@ publishing {
         create<MavenPublication>("test") {
             artifactId = "test-file"
             groupId = "at.schrottner.test.gitlab-repositories"
-            version = "test-kotling-SNAPSHOT"
+            version = "test-kotlin-SNAPSHOT"
             artifact("test.xml", {
                 classifier = "features"
             })

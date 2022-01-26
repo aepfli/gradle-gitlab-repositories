@@ -1,9 +1,8 @@
 import at.schrottner.gradle.auths.*
 import at.schrottner.gradle.*
-import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 
 buildscript {
-    val pluginClasspath: String by project
+    val pluginClasspath: String by settings
     dependencies {
         classpath(files(pluginClasspath.split(',')))
     }
@@ -12,35 +11,26 @@ buildscript {
 apply(plugin = "at.schrottner.gitlab-repositories")
 
 configure<GitlabRepositoriesExtension> {
-    token(PrivateToken::class.javaObjectType, {
+    token("private", {
         key = "tokenIgnoredNoValue"
         value = ""
     })
-    token(PrivateToken::class.javaObjectType, {
+    token("deploy", {
         key = "token0"
         value = "test"
     })
-    token(PrivateToken::class.javaObjectType, {
+    token("deploy", {
         key = "token1"
         value = "test"
     })
-    token(DeployToken::class.javaObjectType, {
-        key = "tokenAdded"
-        value = "test"
-    })
-    token(PrivateToken::class.javaObjectType, {
-        key = "downloadToken"
-        value = System.getenv("TEST_UPLOAD_TOKEN")
-    })
 }
 
-repositories {
-    val realms: String by project
-    val existingId: String by project
-    val renamedId: String by project
+pluginManagement.repositories {
+    val realms: String by settings
+    val existingId: String by settings
+    val renamedId: String by settings
     val gitLab = the<GitlabRepositoriesExtension>()
 
-    maven(gitLab.project("24974077") { tokenSelector.set("downloadToken") })
     maven(gitLab.group("$existingId"))
     maven(gitLab.project("$existingId"))
     maven(gitLab.group("$renamedId") { name.set("group-renamed") })
@@ -53,10 +43,5 @@ repositories {
     maven(gitLab.project("specialTokenSelection") { tokenSelectors.addAll("jobToken", "token1") })
     maven(gitLab.group("ignoredNoValue") { tokenSelector.set("tokenIgnoredNoValue") })
     maven(gitLab.project("ignoredNoValue") { tokenSelector.set("tokenIgnoredNoValue") })
-}
 
-val testing by configurations.creating
-
-dependencies {
-    testing("at.schrottner.test.gitlab-repositories:test-file:test-SNAPSHOT@xml")
 }

@@ -11,15 +11,15 @@ buildscript {
 apply(plugin = "at.schrottner.gitlab-repositories")
 
 configure<GitlabRepositoriesExtension> {
-    token(PrivateToken::class.javaObjectType, {
+    token("private", {
         key = "tokenIgnoredNoValue"
         value = ""
     })
-    token(DeployToken::class.javaObjectType, {
+    token("deploy", {
         key = "token0"
         value = "test"
     })
-    token(DeployToken::class.javaObjectType, {
+    token("deploy", {
         key = "token1"
         value = "test"
     })

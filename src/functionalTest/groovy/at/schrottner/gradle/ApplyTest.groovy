@@ -11,59 +11,18 @@ package at.schrottner.gradle
 
 import static org.assertj.core.api.Assertions.assertThat
 
-import java.nio.file.Files
 import org.gradle.internal.impldep.org.apache.commons.io.FileUtils
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.GradleRunner
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
-import org.junit.jupiter.api.io.TempDir
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-@Disabled
-class GitlabRepositoriesPluginFunctionalTests {
+// TODO: check if we can parameterize this somehow
 
-	private static final Logger logger = LoggerFactory.getLogger(GitlabRepositoriesPluginFunctionalTests.class)
-	public static final String SETTINGS_GRADLE = 'settings.gradle'
-	public static final String BUILD_GRADLE = "build.gradle"
-	private static def existingId = "1234"
-	private static def renamedId = "123"
-	private static def realms = ["group", "project"]
-	private pluginClasspath = getClass().classLoader.findResource("plugin-classpath.txt")
-	.readLines()
-	.collect { it.replace('\\\\', '\\\\\\\\') } // escape backslashes in Windows paths
-	.collect { "$it" }
-	.join(",")
+class ApplyTest extends AbstractFunctionalTests {
 
-	File projectDir
-	File settingsGradle
-	File buildGradle
-	File gradleProperties
-
-	@BeforeEach
-	void setup(@TempDir File projectDir) {
-		this.projectDir = projectDir
-		gradleProperties = new File(projectDir, "gradle.properties")
-		gradleProperties << """
-			existingId=$existingId
-			renamedId=$renamedId
-			pluginClasspath=$pluginClasspath
-			realms=${realms.join(',')}
-		"""
-	}
-
-	@Test
-	void "only used in settings"() {
+	@PluginTest
+	void "only used in settings"(String primer) {
 		//given:
-		settingsGradle = TestFileUtils.getTestResource(new File(projectDir, SETTINGS_GRADLE), SETTINGS_GRADLE)
-		buildGradle = new File(projectDir, BUILD_GRADLE)
-		buildGradle << """
-			task gitLabTask {}
-		"""
 
 		//when:
 		BuildResult result = runTest()
@@ -91,10 +50,9 @@ class GitlabRepositoriesPluginFunctionalTests {
 		}
 	}
 
-	@Test
-	void "only used in project"() {
+	@PluginTest
+	void "only used in project"(String primer) {
 		//given:
-		buildGradle = TestFileUtils.getTestResource(new File(projectDir, BUILD_GRADLE), BUILD_GRADLE)
 
 		//when:
 		BuildResult result = runTest()
@@ -122,11 +80,9 @@ class GitlabRepositoriesPluginFunctionalTests {
 		}
 	}
 
-	@Test
-	void "used in settings and project"() {
+	@PluginTest
+	void "used in settings and project"(String primer) {
 		//given:
-		settingsGradle = TestFileUtils.getTestResource(new File(projectDir, SETTINGS_GRADLE), SETTINGS_GRADLE)
-		buildGradle = TestFileUtils.getTestResource(new File(projectDir, BUILD_GRADLE), BUILD_GRADLE)
 
 		//when:
 		BuildResult result = runTest()
@@ -159,11 +115,9 @@ class GitlabRepositoriesPluginFunctionalTests {
 		}
 	}
 
-	@Test
-	void "used in settings and project without applying"() {
+	@PluginTest
+	void "used in settings and project without applying"(String primer) {
 		//given:
-		settingsGradle = TestFileUtils.getTestResource(new File(projectDir, SETTINGS_GRADLE), SETTINGS_GRADLE)
-		buildGradle = TestFileUtils.getTestResource(new File(projectDir, BUILD_GRADLE), "build-withoutApplying.gradle")
 
 		//when:
 		BuildResult result = runTest()
@@ -196,45 +150,9 @@ class GitlabRepositoriesPluginFunctionalTests {
 		}
 	}
 
-	@Test
-	@DisabledIfEnvironmentVariable(
-	named = 'TEST_UPLOAD_TOKEN',
-	matches = '^$',
-	disabledReason = 'Upload deactivated due to missing TEST_UPLOAD_TOKEN'
-	)
-	void "uploadTest"() {
-		def testFile = TestFileUtils.getTestResource(new File(projectDir, 'test.xml'), 'test.xml')
-		settingsGradle = TestFileUtils.getTestResource(new File(projectDir, SETTINGS_GRADLE), SETTINGS_GRADLE)
-		buildGradle = TestFileUtils.getTestResource(new File(projectDir, BUILD_GRADLE), 'build-upload.gradle')
-
-		def uploadResult = runTest("publishTestPublicationToGitLabRepository", "-i", "-s")
-		def repoPrefix = "GitLab-Project"
-		assertThat(uploadResult.output)
-				.contains("BUILD SUCCESSFUL")
-				.containsSubsequence(
-				"added Job-Token: jobToken",
-				"added Private-Token: tokenIgnoredNoValue",
-				"added Deploy-Token: token0",
-				"added Deploy-Token: token1",
-				"Settings evaluated",
-				"added Private-Token: testToken"
-				)
-				.containsSubsequence("Maven Repository $repoPrefix-$existingId is using 'token0'",
-				"Maven Repository $repoPrefix-specialToken is using 'token0'",
-				"Maven Repository $repoPrefix-specialToken1 is using 'token1'",
-				"Maven Repository $repoPrefix-specialTokenSelection is using 'token1'",
-				"Maven Repository $repoPrefix-ignoredNoValue was not added, as no token could be applied!",
-				"Maven Repository GitLab is using 'testToken'",
-				)
-				.doesNotContain("Maven Repository $repoPrefix-ignoredNoValue is using '")
-				.contains("Publishing to repository 'GitLab'")
-
-	}
-
-	@Test
-	void "subprojectTest"() {
+	@PluginTest
+	void "subproject test"(String primer) {
 		//given:
-		FileUtils.copyDirectory(new File(ClassLoader.getSystemClassLoader().getResource('subprojectTest').toURI()), projectDir)
 
 		//when:
 		BuildResult result = runTest()
@@ -272,14 +190,4 @@ class GitlabRepositoriesPluginFunctionalTests {
 				"replaced Deploy-Token: token0",
 				)
 	}
-
-	private BuildResult runTest(String[] args = ["tasks", "-i", "-s"]) {
-		def runner = GradleRunner.create()
-		runner.forwardOutput()
-		runner.withPluginClasspath()
-		runner.withArguments(args)
-		runner.withProjectDir(projectDir)
-		runner.build()
-	}
-
 }
