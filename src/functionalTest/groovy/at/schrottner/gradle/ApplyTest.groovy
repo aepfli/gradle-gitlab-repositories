@@ -9,12 +9,12 @@
  */
 package at.schrottner.gradle
 
+import static org.assertj.core.api.Assertions.assertThat
+
 import org.gradle.internal.impldep.org.apache.commons.io.FileUtils
 import org.gradle.testkit.runner.BuildResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
-import static org.assertj.core.api.Assertions.assertThat
 
 // TODO: check if we can parameterize this somehow
 
