@@ -4,5 +4,6 @@
     "config:base",
     ":disableDependencyDashboard"
   ],
-  "branchConcurrentLimit": 40
+  "branchConcurrentLimit": 40,
+  "prHourlyLimit": 0
 }
