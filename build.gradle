@@ -4,7 +4,7 @@ plugins {
 	id 'groovy'
 
 	id 'jacoco'
-	id "pl.droidsonroids.jacoco.testkit" version "1.0.7"
+	id "pl.droidsonroids.jacoco.testkit" version "1.0.9"
 	id 'maven-publish'
 	id 'com.gradle.plugin-publish' version '0.12.0'
 
