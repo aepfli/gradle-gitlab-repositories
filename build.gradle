@@ -46,14 +46,14 @@ task createClasspathManifest {
 }
 
 dependencies {
-	testImplementation 'org.spockframework:spock-core:2.0-M4-groovy-2.5'
+	testImplementation 'org.spockframework:spock-core:2.0-groovy-3.0'
 	testImplementation platform('org.junit:junit-bom:5.8.2')
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testImplementation 'org.junit.jupiter:junit-jupiter-engine'
 	testImplementation 'org.junit.jupiter:junit-jupiter-params'
-	testCompile "org.assertj:assertj-core:3.22.0"
-	testCompile "org.apache.commons:commons-text:1.9"
-	testCompile files(createClasspathManifest)
+	testImplementation "org.assertj:assertj-core:3.22.0"
+	testImplementation "org.apache.commons:commons-text:1.9"
+	testImplementation files(createClasspathManifest)
 }
 
 jacoco {
