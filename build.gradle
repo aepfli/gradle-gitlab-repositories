@@ -46,7 +46,7 @@ task createClasspathManifest {
 }
 
 dependencies {
-	testImplementation 'org.spockframework:spock-core:2.1-groovy-3.0'
+	testImplementation 'org.spockframework:spock-core:2.1-groovy-2.5'
 	testImplementation platform('org.junit:junit-bom:5.8.2')
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testImplementation 'org.junit.jupiter:junit-jupiter-engine'
