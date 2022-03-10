@@ -85,9 +85,9 @@ pluginBundle {
 	website = 'http://schrottner.at/gradle-gitlab-repositories/'
 	vcsUrl = 'https://github.com/aepfli/gradle-gitlab-repositories.git'
 	tags = [
-		'GitLab',
-		'repositories',
-		'maven'
+			'GitLab',
+			'repositories',
+			'maven'
 	]
 }
 
@@ -124,5 +124,15 @@ generateJacocoTestKitProperties.destinationFile = "$buildDir.absolutePath/jacoco
 check {
 	// Run the functional tests as part of `check`
 	dependsOn(tasks.functionalTest)
+}
+
+publishing.publications.all {
+	pom {
+		scm {
+			connection = 'scm:git:https://github.com/aepfli/gradle-gitlab-repositories.git'
+			developerConnection = 'ssh://git@github.com:aepfli/gradle-gitlab-repositories.git'
+			url = 'https://github.com/aepfli/gradle-gitlab-repositories'
+		}
+	}
 }
 
