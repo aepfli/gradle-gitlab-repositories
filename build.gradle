@@ -85,9 +85,9 @@ pluginBundle {
 	website = 'http://schrottner.at/gradle-gitlab-repositories/'
 	vcsUrl = 'https://github.com/aepfli/gradle-gitlab-repositories.git'
 	tags = [
-			'GitLab',
-			'repositories',
-			'maven'
+		'GitLab',
+		'repositories',
+		'maven'
 	]
 }
 
