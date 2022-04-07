@@ -9,7 +9,7 @@ plugins {
 	id 'com.gradle.plugin-publish' version '0.21.0'
 
 	id 'com.palantir.git-version' version '0.15.0'
-	id "com.diffplug.spotless" version "6.3.0"
+	id "com.diffplug.spotless" version "6.4.2"
 }
 
 version = "${gitVersion()}".replaceFirst(~/^v/, '')
