@@ -6,7 +6,7 @@ plugins {
 	id 'jacoco'
 	id "pl.droidsonroids.jacoco.testkit" version "1.0.9"
 	id 'maven-publish'
-	id 'com.gradle.plugin-publish' version '0.21.0'
+	id 'com.gradle.plugin-publish' version '1.0.0'
 
 	id 'com.palantir.git-version' version '0.15.0'
 	id "com.diffplug.spotless" version "6.11.0"
