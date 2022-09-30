@@ -52,7 +52,7 @@ dependencies {
 	testImplementation 'org.junit.jupiter:junit-jupiter-engine'
 	testImplementation 'org.junit.jupiter:junit-jupiter-params'
 	testImplementation "org.assertj:assertj-core:3.23.1"
-	testImplementation "org.apache.commons:commons-text:1.9"
+	testImplementation "org.apache.commons:commons-text:1.10.0"
 	testImplementation files(createClasspathManifest)
 }
 
