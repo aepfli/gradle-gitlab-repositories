@@ -106,7 +106,7 @@ class RepositoryActionHandler implements Action<MavenArtifactRepository> {
 				"#################################################################################### \n\t" +
 				"#################################################################################### \n\t" +
 				"#################################################################################### \n\t" +
-				"Currently you have configured following tokens, but non seem to resolve to an value: \n\t" +
+				"Currently you have configured following tokens, but none seem to resolve to a value: \n\t" +
 				"\t- ${applicableTokens.join("\n\t\t- ")} \n\t" +
 				"\n\t" +
 				"				Please verify your configuration - Thank you! \n\t" +
